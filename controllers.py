@@ -46,3 +46,19 @@ def index():
 def my_callback():
     # The return value should be a dictionary that will be sent as JSON.
     return dict(my_value=3)
+
+
+@action('species')
+@action.uses('species.html')
+def species():
+    return dict()  
+
+@action('checklists')
+@action.uses('checklists.html')
+def checklists():
+    return dict()  
+
+@action('sightings')
+@action.uses('sightings.html')
+def sightings():
+    return dict()  
