@@ -48,17 +48,17 @@ def my_callback():
     return dict(my_value=3)
 
 
-@action('species')
-@action.uses('species.html')
+@action('location')
+@action.uses('location.html')
 def species():
     return dict()  
 
-@action('checklists')
-@action.uses('checklists.html')
+@action('checklist')
+@action.uses('checklist.html')
 def checklists():
     return dict()  
 
-@action('sightings')
-@action.uses('sightings.html')
+@action('user_stats')
+@action.uses('user_stats.html')
 def sightings():
     return dict()  
