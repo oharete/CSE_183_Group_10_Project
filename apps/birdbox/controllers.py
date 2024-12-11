@@ -34,9 +34,15 @@ from .models import get_user_email
 url_signer = URLSigner(session)
 
 @action('index')
-@action.uses('index.html', db, auth, url_signer)
+@action.uses('index.html', db, auth)
 def index():
     return dict()
+
+@action('test')
+@action.uses('test.html')
+def test():
+    return dict()
+
 
 @action('location')
 @action.uses('location.html')
