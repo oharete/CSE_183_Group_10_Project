@@ -1,0 +1,65 @@
+[[extend 'layout.html']]
+
+<div class="section" >
+    <h1 class="title">Checklists Page</h1>
+  
+    <!-- Search Bar -->
+    <div class="field">
+        <label class="label">Search for a species:</label>
+        <div class="control">
+            <input
+                class="input"
+                type="text"
+                placeholder="Search for a species..."
+                v-model="searchQuery"
+                @input="fetchSpecies"
+            />
+        </div>
+        <ul v-if="searchResults.length > 0" class="list">
+            <li
+                v-for="species in searchResults"
+                :key="species.id"
+                @click="addSpecies(species)"
+                class="list-item"
+            >
+                {{ species.name }}
+                edit this queen
+            </li>
+        </ul>
+    </div>
+
+
+    <!-- Checklist Table -->
+    <div class="table-container">
+        <table class="table is-striped is-fullwidth">
+            <thead>
+                <tr>
+                    <th>Species</th>
+                    <th>Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="entry in checklist" :key="entry.species_id">
+                    <td>{{ entry.name }}</td>
+                    <td>{{ entry.count }}</td>
+                    <td>
+                        <button class="button is-small is-success" @click="incrementCount(entry.species_id)">+</button>
+                        <button class="button is-small is-danger" @click="decrementCount(entry.species_id)" :disabled="entry.count <= 0">-</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="field is-grouped">
+        <div class="control">
+            <button class="button is-primary" @click="submitChecklist">Submit Checklist</button>
+        </div>
+        <div class="control">
+            <button class="button is-light" @click="clearChecklist">Clear Checklist</button>
+        </div>
+    </div>
+
+</div>
