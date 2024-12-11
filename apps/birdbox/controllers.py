@@ -60,5 +60,5 @@ def checklists():
 
 @action('user_stats')
 @action.uses('user_stats.html')
-def sightings():
+def user_stats():
     return dict()  
