@@ -17,7 +17,7 @@ const app = Vue.createApp({
         },
         // Redirects the user to the User Stats page
         goToStats() {
-            window.location.href = '/stats';
+            window.location.href = '/user_stats';
         },
         // Fetches species suggestions based on user input
         fetchSpecies() {
