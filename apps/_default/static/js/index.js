@@ -4,6 +4,7 @@ const app = Vue.createApp({
   data() {
     return {
       map: null, // Leaflet map instance
+      drawingLayer: null, // Layer group for user-drawn shapes
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
     };
@@ -16,40 +17,83 @@ const app = Vue.createApp({
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(this.map);
+
+      // Add a drawing layer
+      this.drawingLayer = L.featureGroup().addTo(this.map);
+
+      // Add drawing controls
+      const drawControl = new L.Control.Draw({
+        edit: { featureGroup: this.drawingLayer },
+        draw: { rectangle: true },
+      });
+      this.map.addControl(drawControl);
+
+      // Event listener for when a rectangle is created
+      this.map.on(L.Draw.Event.CREATED, (event) => {
+        const layer = event.layer;
+        this.drawingLayer.clearLayers(); // Remove previous shapes
+        this.drawingLayer.addLayer(layer); // Add the new rectangle
+      });
+    },
+    showRegionStats() {
+      // Get the bounds of the drawn rectangle
+      const layers = this.drawingLayer.getLayers();
+      if (layers.length === 0) {
+        alert('Please draw a region on the map first.');
+        return;
+      }
+      const bounds = layers[0].getBounds();
+      const region = {
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest(),
+      };
+
+      // Fetch and display region statistics (mocked here; replace with API call)
+      axios
+        .post('/api/region_stats', region)
+        .then((response) => {
+          const stats = response.data;
+          alert(
+            `Region Stats:\nSpecies Count: ${stats.species_count}\nObservation Count: ${stats.observation_count}`
+          );
+        })
+        .catch((error) => {
+          console.error('Error fetching region statistics:', error);
+        });
     },
     fetchSpecies() {
-      // Fetch species suggestions (mocked here; replace with actual API call)
+      // Fetch species suggestions (same as before)
       axios
         .get(`/api/species?suggest=${this.selectedSpecies}`)
         .then((response) => {
-          this.speciesSuggestions = response.data.species || []; // Update suggestions
+          this.speciesSuggestions = response.data.species || [];
         })
         .catch((error) => {
           console.error('Error fetching species suggestions:', error);
         });
     },
     selectSpecies(speciesName) {
-      // Handle species selection
+      // Handle species selection (same as before)
       this.selectedSpecies = speciesName;
-      this.speciesSuggestions = []; // Clear suggestions
-      this.updateMapWithSpecies(speciesName); // Update the map
+      this.speciesSuggestions = [];
+      this.updateMapWithSpecies(speciesName);
     },
     updateMapWithSpecies(species) {
-      // Fetch and display density data for the selected species (mocked here)
+      // Update map with species data (same as before)
       axios
         .get(`/api/density?species=${species}`)
         .then((response) => {
           const data = response.data.density;
-          // Clear existing map layers except the tile layer
           this.map.eachLayer((layer) => {
-            if (layer instanceof L.Marker || layer instanceof L.Circle) {
+            if (layer instanceof L.Circle) {
               this.map.removeLayer(layer);
             }
           });
-          // Add density markers
           data.forEach((point) => {
             L.circle([point.lat, point.lng], {
-              radius: point.density * 10, // Adjust radius based on density
+              radius: point.density * 10,
               color: 'red',
               fillOpacity: 0.5,
             }).addTo(this.map);
@@ -61,7 +105,7 @@ const app = Vue.createApp({
     },
   },
   mounted() {
-    this.initMap(); // Initialize the map
+    this.initMap();
   },
 });
 

@@ -42,6 +42,13 @@
   <section class="section">
     <div id="map" style="height: 500px;"></div>
   </section>
+
+  <!-- Region Statistics Button -->
+  <section class="section">
+    <button class="button is-success" @click="showRegionStats">
+      Statistics on Selected Region
+    </button>
+  </section>
 </div>
 
 [[block page_scripts]]
@@ -49,6 +56,11 @@
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
 />
 <script src="/static/js/index.js"></script>
 [[end]]
