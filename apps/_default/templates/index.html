@@ -1,56 +1,23 @@
 [[extend 'layout.html']]
 
-<style>
-[v-cloak] {
-     display: none;
-}
-</style>
-
-<div class="section" id="app" v-cloak>
+<div class="section" id="app">
   <!-- Vue.js template for the index page -->
   <section class="section">
-      <h1 class="title"><i class="fa-solid fa-dove"></i> Bird Watching App</h1>
-      <h2 class="subtitle">Explore bird sightings and statistics</h2>
-  </section>
-
-  <!-- Navigation Buttons -->
-  <section class="section">
-      <div class="buttons">
-          <button class="button is-link" @click="goToChecklist">Submit Checklist</button>
-          <button class="button is-info" @click="goToStats">My Birding Stats</button>
-      </div>
-  </section>
-
-  <!-- Species Selector -->
-  <section class="section">
-      <div class="field">
-          <label class="label">Select Species</label>
-          <div class="control">
-              <input type="text" class="input" v-model="selectedSpecies" placeholder="Type to search for a species" @input="fetchSpecies">
-          </div>
-          <div v-if="speciesSuggestions.length > 0" class="dropdown is-active">
-              <div class="dropdown-menu">
-                  <div class="dropdown-content">
-                      <a v-for="species in speciesSuggestions" :key="species.id" class="dropdown-item" @click="selectSpecies(species.name)">
-                          {{ species.name }}
-                      </a>
-                  </div>
-              </div>
-          </div>
-      </div>
+    <h1 class="title">Bird Watching App</h1>
+    <h2 class="subtitle">Explore bird sightings and statistics</h2>
   </section>
 
   <!-- Map Section -->
   <section class="section">
-      <div id="map" style="height: 500px;"></div>
-  </section>
-
-  <!-- Rectangle Statistics Button -->
-  <section class="section">
-      <button class="button is-success" @click="showRegionStats">Statistics on Selected Region</button>
+    <div id="map" style="height: 500px;"></div>
   </section>
 </div>
 
 [[block page_scripts]]
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 <script src="/static/js/index.js"></script>
 [[end]]
