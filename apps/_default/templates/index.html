@@ -7,6 +7,37 @@
     <h2 class="subtitle">Explore bird sightings and statistics</h2>
   </section>
 
+  <!-- Species Selector -->
+  <section class="section">
+    <div class="field">
+      <label class="label">Select Species</label>
+      <div class="control">
+        <input
+          type="text"
+          class="input"
+          v-model="selectedSpecies"
+          placeholder="Type to search for a species"
+          @input="fetchSpecies"
+        />
+      </div>
+      <!-- Suggestions Dropdown -->
+      <div v-if="speciesSuggestions.length > 0" class="dropdown is-active">
+        <div class="dropdown-menu">
+          <div class="dropdown-content">
+            <a
+              v-for="species in speciesSuggestions"
+              :key="species.id"
+              class="dropdown-item"
+              @click="selectSpecies(species.name)"
+            >
+              {{ species.name }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Map Section -->
   <section class="section">
     <div id="map" style="height: 500px;"></div>
