@@ -29,20 +29,19 @@ def get_time():
 # This table stores the common names of bird species.
 db.define_table(
     "species",
-    Field("common_name", unique=True, requires=[IS_NOT_EMPTY()]),  # Common name of the bird
+    Field("common_name", "string", unique=True, requires=[IS_NOT_EMPTY()]),  # Common name of the bird
 )
 
 # Define the Checklists table
 # This table stores information about birding events.
 db.define_table(
     "checklists",
-    Field("sampling_event_id", unique=True, requires=[IS_NOT_EMPTY()]),  # Unique ID for the sampling event
+    Field("sampling_event_id", "string", unique=True, requires=[IS_NOT_EMPTY()]),  # Unique ID for the sampling event
     Field("latitude", "double", requires=[IS_FLOAT_IN_RANGE(-90, 90)]),  # Latitude of the observation
     Field("longitude", "double", requires=[IS_FLOAT_IN_RANGE(-180, 180)]),  # Longitude of the observation
     Field("observation_date", "date", requires=[IS_DATE()]),  # Date of observation
     Field("time_started", "time"),  # Time the observation started
     Field("observer_id", requires=[IS_NOT_EMPTY()]),  # ID of the observer
-    # Field("duration_minutes", "integer"),  # Duration of the observation in minutes
     Field("duration_minutes", "double"),  # Duration of the observation in minutes
 )
 
@@ -61,7 +60,6 @@ db.commit()
 # Load species.csv
 # Use relative paths
 base_path = os.path.dirname(__file__)
-# uploads_path = os.path.join(base_path, "apps", "uploads")
 uploads_path = os.path.join(base_path, "uploads")
 
 species_csv = os.path.join(uploads_path, "species.csv")
@@ -88,23 +86,11 @@ with open(checklist_csv, "r") as f:
                 observation_date=row["OBSERVATION DATE"],
                 time_started=row["TIME OBSERVATIONS STARTED"] or None,
                 observer_id=row["OBSERVER ID"],
-                duration_minutes=int(row["DURATION MINUTES"]) if row["DURATION MINUTES"] else None,
+                duration_minutes=float(row["DURATION MINUTES"]) if row["DURATION MINUTES"] else None,
             )
         except Exception as e:
             print(f"Error inserting checklist: {row} - {e}")
 
-# Load sightings.csv
-# with open(sightings_csv, "r") as f:
-#     reader = csv.DictReader(f, delimiter=",")  # Tab-delimited
-#     for row in reader:
-#         try:
-#             db.sightings.insert(
-#                 sampling_event_id=row["SAMPLING EVENT IDENTIFIER"],
-#                 common_name=row["COMMON NAME"],
-#                 observation_count=int(row["OBSERVATION COUNT"]),
-#             )
-#         except Exception as e:
-#             print(f"Error inserting sighting: {row} - {e}")
 with open(sightings_csv, "r", encoding="utf-8") as f:
     reader = csv.DictReader(f, delimiter=",")  # Comma-delimited
     for row in reader:
@@ -122,7 +108,6 @@ with open(sightings_csv, "r", encoding="utf-8") as f:
             # Insert into the database
             db.sightings.insert(
                 sampling_event_id=row["SAMPLING EVENT IDENTIFIER"],
-                # common_name=row["COMMON NAME"],
                 common_name=species_record.id,  
                 observation_count=observation_count,
             )
