@@ -34,18 +34,14 @@ from .models import get_user_email
 url_signer = URLSigner(session)
 
 @action('index')
-@action.uses('index.html', db, auth, url_signer)
+@action.uses('index.html', db, auth)
 def index():
-    return dict(
-        # COMPLETE: return here any signed URLs you need.
-        my_callback_url = URL('my_callback', signer=url_signer),
-    )
+    return dict()
 
-@action('my_callback')
-@action.uses() # Add here things like db, auth, etc.
-def my_callback():
-    # The return value should be a dictionary that will be sent as JSON.
-    return dict(my_value=3)
+@action('test')
+@action.uses('test.html')
+def test():
+    return dict()
 
 
 @action('location')
@@ -60,5 +56,5 @@ def checklists():
 
 @action('user_stats')
 @action.uses('user_stats.html')
-def sightings():
+def user_stats():
     return dict()  

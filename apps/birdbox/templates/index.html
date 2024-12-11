@@ -6,18 +6,51 @@
 }
 </style>
 
-
 <div class="section" id="app" v-cloak>
-  <!-- Put here your Vue.js template -->
-  <h1 class="title"><i class="fa-solid fa-cube"></i> Title</h1>
-  <p>Content: my_value: {{my_value}} </p>
+  <!-- Vue.js template for the index page -->
+  <section class="section">
+      <h1 class="title"><i class="fa-solid fa-dove"></i> Bird Watching App</h1>
+      <h2 class="subtitle">Explore bird sightings and statistics</h2>
+  </section>
+
+  <!-- Navigation Buttons -->
+  <section class="section">
+      <div class="buttons">
+          <button class="button is-link" @click="goToChecklist">Submit Checklist</button>
+          <button class="button is-info" @click="goToStats">My Birding Stats</button>
+      </div>
+  </section>
+
+  <!-- Species Selector -->
+  <section class="section">
+      <div class="field">
+          <label class="label">Select Species</label>
+          <div class="control">
+              <input type="text" class="input" v-model="selectedSpecies" placeholder="Type to search for a species" @input="fetchSpecies">
+          </div>
+          <div v-if="speciesSuggestions.length > 0" class="dropdown is-active">
+              <div class="dropdown-menu">
+                  <div class="dropdown-content">
+                      <a v-for="species in speciesSuggestions" :key="species.id" class="dropdown-item" @click="selectSpecies(species.name)">
+                          {{ species.name }}
+                      </a>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </section>
+
+  <!-- Map Section -->
+  <section class="section">
+      <div id="map" style="height: 500px;"></div>
+  </section>
+
+  <!-- Rectangle Statistics Button -->
+  <section class="section">
+      <button class="button is-success" @click="showRegionStats">Statistics on Selected Region</button>
+  </section>
 </div>
 
-
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
-<script>
-  let my_callback_url = "[[=XML(my_callback_url)]]";
-</script>
-<script src="js/index.js"></script>
+<script src="/static/js/index.js"></script>
 [[end]]
