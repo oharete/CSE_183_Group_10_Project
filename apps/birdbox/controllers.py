@@ -58,3 +58,4 @@ def checklists():
 @action.uses('user_stats.html')
 def user_stats():
     return dict()  
+
