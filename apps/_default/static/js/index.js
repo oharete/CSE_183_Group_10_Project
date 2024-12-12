@@ -104,29 +104,54 @@ const app = Vue.createApp({
       this.speciesSuggestions = [];
       this.updateMapWithSpecies(speciesName);
     },
+    // updateMapWithSpecies(species) {
+    //   // Update map with species data (same as before)
+    //   axios
+    //     .get(`/api/density?species=${species}`)
+    //     .then((response) => {
+    //       const data = response.data.density;
+    //       this.map.eachLayer((layer) => {
+    //         if (layer instanceof L.Circle) {
+    //           this.map.removeLayer(layer);
+    //         }
+    //       });
+    //       data.forEach((point) => {
+    //         L.circle([point.lat, point.lng], {
+    //           radius: point.density * 10,
+    //           color: 'red',
+    //           fillOpacity: 0.5,
+    //         }).addTo(this.map);
+    //       });
+    //     })
+    //     .catch((error) => {
+    //       console.error('Error updating map with species data:', error);
+    //     });
+    // },
     updateMapWithSpecies(species) {
-      // Update map with species data (same as before)
       axios
-        .get(`/api/density?species=${species}`)
-        .then((response) => {
-          const data = response.data.density;
-          this.map.eachLayer((layer) => {
-            if (layer instanceof L.Circle) {
-              this.map.removeLayer(layer);
-            }
+          .get(`/api/density?species=${species}`)
+          .then(response => {
+              const data = response.data.density;
+              // Clear existing map layers except the drawing layer
+              this.map.eachLayer(layer => {
+                  if (layer !== this.drawingLayer && layer.options && layer.options.attribution !== undefined) {
+                      this.map.removeLayer(layer);
+                  }
+              });
+              // Add density markers to the map
+              data.forEach(point => {
+                  L.circle([point.lat, point.lng], {
+                      radius: point.density * 10, // Adjust size based on density
+                      color: 'red',
+                      fillOpacity: 0.5
+                  }).addTo(this.map);
+              });
+          })
+          .catch(error => {
+              console.error("Error updating map with species data:", error);
           });
-          data.forEach((point) => {
-            L.circle([point.lat, point.lng], {
-              radius: point.density * 10,
-              color: 'red',
-              fillOpacity: 0.5,
-            }).addTo(this.map);
-          });
-        })
-        .catch((error) => {
-          console.error('Error updating map with species data:', error);
-        });
     },
+
     //for checklist
     fetchSpeciesChecklist() {
       // Fetch species filtered by the search query
