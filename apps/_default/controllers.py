@@ -42,6 +42,14 @@ url_signer = URLSigner(session)
 def index():
     return dict()
 
+@action("api/species", method=["GET"])
+@action.uses(db)
+def api_species():
+    suggest = request.query.get("suggest", "").strip().lower()
+    species = db(db.species.common_name.lower().contains(suggest)).select().as_list()
+    return dict(species=species)
+
+
 @action('test')
 @action.uses('test.html')
 def test():

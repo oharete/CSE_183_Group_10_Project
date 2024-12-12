@@ -68,17 +68,30 @@ const app = Vue.createApp({
           console.error('Error fetching region statistics:', error);
         });
     },
+    // fetchSpecies() {
+    //   // Fetch species suggestions (same as before)
+    //   axios
+    //     .get(`/api/species?suggest=${this.selectedSpecies}`)
+    //     .then((response) => {
+    //       this.speciesSuggestions = response.data.species || [];
+    //     })
+    //     .catch((error) => {
+    //       console.error('Error fetching species suggestions:', error);
+    //     });
+    // },
     fetchSpecies() {
-      // Fetch species suggestions (same as before)
       axios
-        .get(`/api/species?suggest=${this.selectedSpecies}`)
-        .then((response) => {
-          this.speciesSuggestions = response.data.species || [];
-        })
-        .catch((error) => {
-          console.error('Error fetching species suggestions:', error);
-        });
-    },
+          .get(`/api/species?suggest=${this.selectedSpecies}`)
+          .then((response) => {
+              this.speciesSuggestions = response.data.species.map((s) => ({
+                  id: s.id,
+                  name: s.common_name,
+              }));
+          })
+          .catch((error) => {
+              console.error("Error fetching species suggestions:", error);
+          });
+    },  
     selectSpecies(speciesName) {
       // Handle species selection (same as before)
       this.selectedSpecies = speciesName;
