@@ -7,6 +7,11 @@ const app = Vue.createApp({
       drawingLayer: null, // Layer group for user-drawn shapes
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
+
+      //for checklist page
+      searchQuery: "", // Search bar input
+      species: [], // Full list of species fetched from the server
+      filteredSpecies: [], // Filtered species list based on the search query
     };
   },
   methods: {
@@ -103,6 +108,55 @@ const app = Vue.createApp({
           console.error('Error updating map with species data:', error);
         });
     },
+    //for checklist
+    fetchSpeciesChecklist() {
+      // Fetch species filtered by the search query
+      console.log("am i here?")
+      fetch(`${get_species_url}?query=${encodeURIComponent(this.searchQuery)}`)
+        .then((response) => response.json())
+        .then((data) => {
+          this.filteredSpecies = data.species.map((item) => ({
+            ...item,
+            count: 0, // Initialize count for each species
+          }));
+        })
+        .catch((error) => {
+          console.error("Error fetching species:", error);
+        });
+    },
+    incrementCount(species) {
+      species.count += 1; // Increment count
+    },
+    decrementCount(species) {
+      if (species.count > 0) {
+        species.count -= 1; // Decrement count
+      }
+    },
+    submitChecklist() {
+      const species = this.filteredSpecies.filter((s) => s.count > 0); // Only species with a count > 0
+      fetch("/save_checklist", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ species }),
+      })
+          .then((response) => response.json())
+          .then((data) => {
+              if (data.status === "success") {
+                  alert("Checklist submitted successfully!");
+                  this.clearChecklist(); // Reset the checklist after submission
+              } else {
+                  alert(`Error: ${data.message}`);
+              }
+          })
+          .catch((error) => {
+              console.error("Error submitting checklist:", error);
+          });
+  },
+  clearChecklist() {
+      this.filteredSpecies.forEach((s) => (s.count = 0)); // Reset counts
+  },
   },
   mounted() {
     this.initMap();

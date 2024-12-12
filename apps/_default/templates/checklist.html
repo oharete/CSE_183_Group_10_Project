@@ -1,8 +1,8 @@
 [[extend 'layout.html']]
 
-<div class="section" >
+<div class="section" id="app">
     <h1 class="title">Checklists Page</h1>
-  
+    
     <!-- Search Bar -->
     <div class="field">
         <label class="label">Search for a species:</label>
@@ -12,24 +12,12 @@
                 type="text"
                 placeholder="Search for a species..."
                 v-model="searchQuery"
-                @input="fetchSpecies"
+                @input="fetchSpeciesChecklist"
             />
         </div>
-        <ul v-if="searchResults.length > 0" class="list">
-            <li
-                v-for="species in searchResults"
-                :key="species.id"
-                @click="addSpecies(species)"
-                class="list-item"
-            >
-                {{ species.name }}
-                edit this queen
-            </li>
-        </ul>
     </div>
-
-
-    <!-- Checklist Table -->
+    
+    <!-- Display Filtered Species -->
     <div class="table-container">
         <table class="table is-striped is-fullwidth">
             <thead>
@@ -40,19 +28,25 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="entry in checklist" :key="entry.species_id">
-                    <td>{{ entry.name }}</td>
-                    <td>{{ entry.count }}</td>
+                <tr v-for="species in filteredSpecies" :key="species.id">
+                    <td>{{ species.common_name }}</td>
                     <td>
-                        <button class="button is-small is-success" @click="incrementCount(entry.species_id)">+</button>
-                        <button class="button is-small is-danger" @click="decrementCount(entry.species_id)" :disabled="entry.count <= 0">-</button>
+                        <input
+                            type="number"
+                            class="input is-small"
+                            v-model.number="species.count"
+                            min="0"
+                        />
+                    </td>
+                    <td>
+                        <button class="button is-small is-success" @click="incrementCount(species)">+</button>
+                        <button class="button is-small is-danger" @click="decrementCount(species)" :disabled="species.count <= 0">-</button>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-
-    <!-- Submit Button -->
+     <!-- Display Submit Button -->
     <div class="field is-grouped">
         <div class="control">
             <button class="button is-primary" @click="submitChecklist">Submit Checklist</button>
@@ -61,5 +55,11 @@
             <button class="button is-light" @click="clearChecklist">Clear Checklist</button>
         </div>
     </div>
-
 </div>
+
+[[block page_scripts]]
+<script>
+    let get_species_url = "[[=XML(get_species_url)]]";
+</script>
+<script src="/static/js/index.js"></script>
+[[end]]

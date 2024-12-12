@@ -50,9 +50,74 @@ def species():
     return dict()  
 
 @action('checklist')
-@action.uses('checklist.html')
+@action.uses('checklist.html', db)
 def checklists():
-    return dict()  
+    return dict( 
+        get_species_url=URL("get_species"),
+        save_checklist_url=URL("save_checklist"),
+    )  
+
+#for checklist html
+#an endpoint to retrieve species filtered by the search query.
+@action("get_species", method=["GET"])
+@action.uses(db)
+def get_species():
+    query = request.query.get("query", "").strip().lower()
+    print(f"Received query: {query}")
+    species = db(db.species.common_name.contains(query)).select().as_list()
+    return dict(species=species)
+
+# an endpoint to save the checklist to the database.
+@action("save_checklist", method=["POST"])
+@action.uses(db, auth)
+def save_checklist():
+    data = request.json
+    checklist_id = data.get("checklist_id")  # For updates
+    species_data = data.get("species", [])  # Array of species and counts
+
+    if checklist_id:
+        checklist = db.checklists[checklist_id]
+        if not checklist:
+            raise HTTP(404, "Checklist not found.")
+        checklist.update_record(
+            observation_date=datetime.datetime.utcnow()
+        )
+        db(db.sightings.sampling_event_id == checklist_id).delete()
+    else:
+        checklist_id = db.checklists.insert(
+            sampling_event_id=str(uuid.uuid4()),
+            latitude=0,  # Placeholder
+            longitude=0,  # Placeholder
+            observation_date=datetime.datetime.utcnow(),
+            observer_id=auth.current_user.get("email"),
+        )
+
+    for item in species_data:
+        db.sightings.insert(
+            sampling_event_id=checklist_id,
+            common_name=item["common_name"],
+            observation_count=item["count"],
+        )
+
+    return dict(status="success", checklist_id=checklist_id)
+
+#Create an endpoint to retrieve submitted checklists.
+@action("get_checklists", method=["GET"])
+@action.uses(db, auth)
+def get_checklists():
+    checklists = db(db.checklists.observer_id == auth.current_user.get("email")).select().as_list()
+    return dict(checklists=checklists)
+
+#delete a checklist
+@action("delete_checklist/<checklist_id>", method=["DELETE"])
+@action.uses(db, auth)
+def delete_checklist(checklist_id):
+    checklist = db.checklists[checklist_id]
+    if not checklist:
+        raise HTTP(404, "Checklist not found.")
+    db(db.sightings.sampling_event_id == checklist_id).delete()
+    db(db.checklists.id == checklist_id).delete()
+    return dict(status="success")
 
 @action('user_stats')
 @action.uses('user_stats.html')
