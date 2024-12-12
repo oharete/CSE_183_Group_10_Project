@@ -1,0 +1,65 @@
+[[extend 'layout.html']]
+
+<div class="section" id="app">
+    <h1 class="title">Checklists Page</h1>
+    
+    <!-- Search Bar -->
+    <div class="field">
+        <label class="label">Search for a species:</label>
+        <div class="control">
+            <input
+                class="input"
+                type="text"
+                placeholder="Search for a species..."
+                v-model="searchQuery"
+                @input="fetchSpeciesChecklist"
+            />
+        </div>
+    </div>
+    
+    <!-- Display Filtered Species -->
+    <div class="table-container">
+        <table class="table is-striped is-fullwidth">
+            <thead>
+                <tr>
+                    <th>Species</th>
+                    <th>Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="species in filteredSpecies" :key="species.id">
+                    <td>{{ species.common_name }}</td>
+                    <td>
+                        <input
+                            type="number"
+                            class="input is-small"
+                            v-model.number="species.count"
+                            min="0"
+                        />
+                    </td>
+                    <td>
+                        <button class="button is-small is-success" @click="incrementCount(species)">+</button>
+                        <button class="button is-small is-danger" @click="decrementCount(species)" :disabled="species.count <= 0">-</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+     <!-- Display Submit Button -->
+    <div class="field is-grouped">
+        <div class="control">
+            <button class="button is-primary" @click="submitChecklist">Submit Checklist</button>
+        </div>
+        <div class="control">
+            <button class="button is-light" @click="clearChecklist">Clear Checklist</button>
+        </div>
+    </div>
+</div>
+
+[[block page_scripts]]
+<script>
+    let get_species_url = "[[=XML(get_species_url)]]";
+</script>
+<script src="/static/js/index.js"></script>
+[[end]]

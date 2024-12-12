@@ -5,11 +5,11 @@ assert py4web.check_compatible("0.1.20190709.1")
 
 # by importing db you expose it to the _dashboard/dbadmin
 # from .birdbox.models import db
-from ._default.models import db
+from .models import db
 
 # by importing controllers you expose the actions defined in it
 # from .birdbox import controllers
-from ._default import controllers
+from . import controllers
 
 # optional parameters
 __version__ = "0.0.0"
