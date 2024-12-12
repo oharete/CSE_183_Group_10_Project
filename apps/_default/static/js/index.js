@@ -80,6 +80,12 @@ const app = Vue.createApp({
     //     });
     // },
     fetchSpecies() {
+      if (this.selectedSpecies.trim() === "") {
+        // Clear suggestions if the search box is empty
+        this.speciesSuggestions = [];
+        return;
+      }
+
       axios
           .get(`/api/species?suggest=${this.selectedSpecies}`)
           .then((response) => {
