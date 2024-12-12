@@ -1,0 +1,15 @@
+<div id="user-stats">
+    <h1>User Stats</h1>
+
+    <!--Searchable Species List-->
+    <input type="text" v-model="searchQuery" placeholder="Search species">
+    <ul>
+        <li v-for="species in filteredSpecies" :key="species">
+            {{ species }}
+        </li>
+    </ul>
+
+    <!--Trends Visualization-->
+    <h2>Your Bird-Watching Trends</h2>
+    <canvas id="trendChart"></canvas>
+</div>
