@@ -27,9 +27,14 @@ Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app w
 
 from py4web import action, request, abort, redirect, URL
 from yatl.helpers import A
-from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
+from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
 from py4web.utils.url_signer import URLSigner
 from .models import get_user_email
+import json
+from py4web.core import HTTP
+import uuid
+import datetime
+
 
 url_signer = URLSigner(session)
 
@@ -37,6 +42,45 @@ url_signer = URLSigner(session)
 @action.uses('index.html', db, auth)
 def index():
     return dict()
+
+@action('api/species', method=['GET'])
+@action.uses(db)
+def get_species():
+    query = request.query.get('suggest', '').strip().lower()
+    species = db(db.species.common_name.contains(query)).select().as_list()
+    return dict(species=species)
+
+@action('api/density', method=['GET'])
+@action.uses(db)
+def get_density():
+    species = request.query.get('species', '').strip().lower()
+    rows = db(db.sightings.common_name == species).select(
+        db.sightings.observation_count, db.checklists.latitude, db.checklists.longitude,
+        join=db.checklists.on(db.sightings.sampling_event_id == db.checklists.id)
+    )
+    density = [{'lat': r.latitude, 'lng': r.longitude, 'density': r.observation_count} for r in rows]
+    return dict(density=density)
+
+@action('api/region_stats', method=['POST'])
+@action.uses(db)
+def get_region_stats():
+    data = request.json
+    region = {
+        'north': data.get('north'),
+        'south': data.get('south'),
+        'east': data.get('east'),
+        'west': data.get('west')
+    }
+    sightings = db(
+        (db.sightings.latitude <= region['north']) &
+        (db.sightings.latitude >= region['south']) &
+        (db.sightings.longitude <= region['east']) &
+        (db.sightings.longitude >= region['west'])
+    ).select()
+    species_count = len(set(s.common_name for s in sightings))
+    observation_count = sum(s.observation_count for s in sightings)
+    return dict(species_count=species_count, observation_count=observation_count)
+
 
 @action('test')
 @action.uses('test.html')
