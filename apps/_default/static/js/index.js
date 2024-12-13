@@ -9,6 +9,11 @@ const app = Vue.createApp({
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
       loadingHeatmap: false, // Show loading indicator while heatmap is being updated
+      userStatsData: { //Iain work start
+        speciesList: [], // Stores all species seen by the user
+        trends: [], // Stores bird-watching trends over time
+      },//Iain work end
+
 
       // For checklist page
       searchQuery: "", // Search bar input
@@ -21,36 +26,46 @@ const app = Vue.createApp({
       // Initialize the map with a default location in case geolocation fails
       this.map = L.map('map').setView([36.9905, -122.0584], 10);
       console.log("Map initialized with default location.");
+
+      // Add tile layer from OpenStreetMap
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(this.map);
 
-      // Add drawing layer
+      // Add a drawing layer for shapes
       this.drawingLayer = L.featureGroup().addTo(this.map);
+
+      // Enable drawing controls with options for editing and drawing rectangles
       const drawControl = new L.Control.Draw({
         edit: { featureGroup: this.drawingLayer },
         draw: { rectangle: true },
       });
       this.map.addControl(drawControl);
 
-      // Event listener for rectangle creation
+      // Handle rectangle creation event
       this.map.on(L.Draw.Event.CREATED, (event) => {
         const layer = event.layer;
-        this.drawingLayer.clearLayers(); // Clear existing shapes
-        this.drawingLayer.addLayer(layer); // Add the new rectangle
+        this.drawingLayer.clearLayers(); // Remove any existing shapes
+        this.drawingLayer.addLayer(layer); // Add the new rectangle to the drawing layer
       });
     },
+
     centerMapOnUser() {
+      // Check if geolocation is available in the browser
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
             console.log("User's location:", { latitude, longitude });
-            this.map.setView([latitude, longitude], 10); // Center map on user's location
+
+            // Center the map on the user's location
+            this.map.setView([latitude, longitude], 10);
           },
           (error) => {
             console.error("Geolocation error:", error);
+
+            // Notify the user if geolocation fails
             alert(
               "Unable to retrieve your location. The map will remain on the default region."
             );
@@ -58,34 +73,43 @@ const app = Vue.createApp({
         );
       } else {
         console.error("Geolocation is not supported by your browser.");
+
+        // Notify the user if geolocation is not supported
         alert("Geolocation is not supported by your browser.");
       }
     },
+
     updateHeatmap(data) {
-      // Remove existing heatmap layer, if any
+      // Remove the existing heatmap layer, if it exists
       if (this.heatLayer) {
         this.map.removeLayer(this.heatLayer);
       }
 
-      // Convert density data to a format usable by Leaflet.heat
+      // Format density data for the Leaflet heatmap plugin
       const heatData = data.map((point) => [point.lat, point.lng, point.density]);
+
+      // Add a new heatmap layer with the provided data
       this.heatLayer = L.heatLayer(heatData, {
         radius: 25,
         blur: 15,
         maxZoom: 17,
       }).addTo(this.map);
     },
+
     fetchDensity() {
-      // Fetch density data for the selected species or all species
+      // Build the API query for fetching density data based on the selected species
       const speciesQuery = this.selectedSpecies
         ? `?species=${encodeURIComponent(this.selectedSpecies)}`
         : '';
+
       axios
         .get(`/api/density${speciesQuery}`)
         .then((response) => {
+          // Check if density data exists
           if (response.data.density && response.data.density.length > 0) {
-            this.updateHeatmap(response.data.density);
+            this.updateHeatmap(response.data.density); // Update the heatmap with fetched data
           } else {
+            // Notify the user if no data is available
             alert(
               this.selectedSpecies
                 ? `No density data available for species: ${this.selectedSpecies}.`
@@ -94,12 +118,13 @@ const app = Vue.createApp({
           }
         })
         .catch((error) => {
-          console.error('Error fetching density data:', error);
+          console.error('Error fetching density data:', error); // Log errors in the console
         });
     },
+
     fetchSpecies() {
+      // Clear suggestions if the search box is empty
       if (this.selectedSpecies.trim() === "") {
-        // Clear suggestions if the search box is empty
         this.speciesSuggestions = [];
         return;
       }
@@ -107,33 +132,38 @@ const app = Vue.createApp({
       axios
         .get(`/api/species?suggest=${this.selectedSpecies}`)
         .then((response) => {
+          // Update suggestions with the fetched species data
           this.speciesSuggestions = response.data.species.map((s) => ({
             id: s.id,
             name: s.common_name,
           }));
         })
         .catch((error) => {
-          console.error("Error fetching species suggestions:", error);
+          console.error("Error fetching species suggestions:", error); // Log errors in the console
         });
     },
+
     clearSelection() {
       this.selectedSpecies = ''; // Clear the selected species
       this.fetchDensity(); // Reload heatmap for all species
-    },  
-    selectSpecies(speciesName) {
-      // Handle species selection
-      this.selectedSpecies = speciesName;
-      this.speciesSuggestions = [];
-      this.fetchDensity(); // Update heatmap with selected species
     },
 
-    // Redirect to the Location page
+    selectSpecies(speciesName) {
+      // Update the selected species and clear suggestions
+      this.selectedSpecies = speciesName;
+      this.speciesSuggestions = [];
+      this.fetchDensity(); // Update the heatmap for the selected species
+    },
+
     showRegionStats() {
+      // Get the drawn region from the map
       const layers = this.drawingLayer.getLayers();
       if (layers.length === 0) {
-        alert('Please draw a region on the map first.');
+        alert('Please draw a region on the map first.'); // Notify user if no region is drawn
         return;
       }
+
+      // Extract bounds from the drawn region
       const bounds = layers[0].getBounds();
       const region = {
         north: bounds.getNorth(),
@@ -142,31 +172,28 @@ const app = Vue.createApp({
         west: bounds.getWest(),
       };
 
-
-      // Store the selected region in localStorage
+      // Save the selected region in localStorage for use in other pages
       localStorage.setItem('selectedRegion', JSON.stringify(region));
 
-      // Redirect to the location page
+      // Redirect the user to the location page
       window.location.href = '/location';
-
-
-      // // Redirect to the Location Page with region bounds as query parameters
-      // const queryParams = new URLSearchParams(region).toString();
-      // window.location.href = `/location?${queryParams}`;
     },
 
-    // Redirect to the Checklist page
     goToChecklist() {
+      // Redirect the user to the Checklist page
       window.location.href = "/checklist";
     },
 
-    // Redirect to the Stats page
     goToStats() {
-      window.location.href = "/user_stats"; // maybe change if iian needs 
+      // Redirect the user to the Stats page
+      window.location.href = "/user_stats";
     },
 
-    // For checklist
+
+    /////////////// For checklist start
     fetchSpeciesChecklist() {
+      // Fetch species filtered by the search query
+
       fetch(`${get_species_url}?query=${encodeURIComponent(this.searchQuery)}`)
         .then((response) => response.json())
         .then((data) => {
@@ -189,15 +216,15 @@ const app = Vue.createApp({
     },
     submitChecklist() {
       const species = this.filteredSpecies.filter((s) => s.count > 0); // Only species with a count > 0
-      fetch("/save_checklist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ species }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
+      if (species.length === 0) {
+        alert("No species with counts to submit.");
+        return;
+      }
+
+      this.loading = true; // Set loading state
+      axios.post("/save_checklist", { species })
+        .then((response) => {
+          const data = response.data;
           if (data.status === "success") {
             alert("Checklist submitted successfully!");
             this.clearChecklist(); // Reset the checklist after submission
@@ -207,12 +234,19 @@ const app = Vue.createApp({
         })
         .catch((error) => {
           console.error("Error submitting checklist:", error);
+          alert(
+            error.response?.data?.message || "An error occurred while submitting the checklist."
+          );
+        })
+        .finally(() => {
+          this.loading = false; // Reset loading state
         });
     },
     clearChecklist() {
       this.filteredSpecies.forEach((s) => (s.count = 0)); // Reset counts
     },
   },
+  /////////////// For checklist end
 
   mounted() {
     this.initMap();
@@ -222,4 +256,3 @@ const app = Vue.createApp({
 });
 
 app.mount('#app');
- 
