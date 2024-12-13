@@ -1,20 +1,34 @@
 [[extend 'layout.html']]
-<div id="user-stats">
-    <h1>User Stats</h1>
+
+<style>
+[v-cloak] {
+     display: none;
+}
+</style>
+
+<div class="section" id="app" v-cloak>
+  <!-- Vue.js Template Starts Here -->
+  <h1 class="title"><i class="fa-solid fa-cube"></i> User Stats</h1>
   
-    <!-- Searchable Species List -->
-    <h2>Species You've Seen</h2>
-    <input type="text" v-model="searchQuery" placeholder="Search species">
-    <ul>
-      <li v-for="species in filteredSpecies" :key="species">
-        [[ species ]]
-      </li>
-    </ul>
+  <!-- Searchable Species List -->
+  <h2>Species You've Seen</h2>
+  <input type="text" v-model="searchQuery" placeholder="Search species" class="input">
+  <ul>
+    <li v-for="species in filteredSpecies" :key="species">
+      [[ species ]]
+    </li>
+  </ul>
   
-    <!-- Trends Visualization -->
-    <h2>Your Bird-Watching Trends</h2>
-    <canvas id="trendChart"></canvas>
+  <!-- Trends Visualization -->
+  <h2>Your Bird-Watching Trends</h2>
+  <canvas id="trendChart"></canvas>
 </div>
 
-  
+[[block page_scripts]]
+<!-- User Stats-specific JavaScript -->
+<script>
+  // Callback URL (if needed in your app logic)
+  let my_callback_url = "[[=XML(my_callback_url)]]";
+</script>
+<script src="js/static/js/user_stats.js"></script>
 [[end]]
