@@ -1,52 +1,51 @@
 "use strict";
 
 const app = Vue.createApp({
-  delimiters: ['[[', ']]'], // Adjusted for compatibility with backend templates
+  delimiters: ["[[", "]]"], // Adjust Vue delimiters for compatibility with backend
   data() {
     return {
-      // User stats data
       searchQuery: "", // User's search input for species
-      userStatsData: {
-        speciesList: [], // List of species seen by the user
-        trends: [], // Bird-watching trends over time
-      },
+      speciesList: [], // List of species fetched from the backend
+      trends: [], // Bird-watching trends over time
     };
   },
   computed: {
+    // Dynamically filter the species list based on the search query
     filteredSpecies() {
-      return this.userStatsData.speciesList.filter((species) =>
+      return this.speciesList.filter((species) =>
         species.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     },
   },
   methods: {
-    fetchUserStats() {
-      // Fetch species list
+    // Fetch the list of species the user has seen
+    fetchSpeciesList() {
       axios
         .get("/api/user_stats/species")
         .then((response) => {
-          this.userStatsData.speciesList = response.data.species;
+          this.speciesList = response.data.species || [];
         })
         .catch((error) => {
-          console.error("Error fetching user stats (species list):", error);
+          console.error("Error fetching species list:", error);
         });
-
-      // Fetch trends data
+    },
+    // Fetch the user's bird-watching trends
+    fetchTrends() {
       axios
         .get("/api/user_stats/trends")
         .then((response) => {
-          this.userStatsData.trends = response.data.trends;
-          this.renderChart(); // Render chart after fetching data
+          this.trends = response.data.trends || [];
+          this.renderChart(); // Render the trends chart after data is fetched
         })
         .catch((error) => {
-          console.error("Error fetching user stats (trends):", error);
+          console.error("Error fetching trends data:", error);
         });
     },
+    // Render the trends chart using Chart.js
     renderChart() {
-      // Render trends chart using Chart.js
       const ctx = document.getElementById("trendChart").getContext("2d");
-      const labels = this.userStatsData.trends.map((t) => t.date);
-      const counts = this.userStatsData.trends.map((t) => t.count);
+      const labels = this.trends.map((t) => t.date);
+      const counts = this.trends.map((t) => t.count);
 
       new Chart(ctx, {
         type: "line",
@@ -63,12 +62,28 @@ const app = Vue.createApp({
         },
         options: {
           responsive: true,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Date",
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Sightings",
+              },
+            },
+          },
         },
       });
     },
   },
   mounted() {
-    this.fetchUserStats(); // Fetch stats when the app loads
+    console.log("Vue is mounted!"); // Debugging message
+    this.fetchSpeciesList();
+    this.fetchTrends();
   },
 });
 

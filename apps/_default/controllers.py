@@ -223,35 +223,39 @@ def get_checklists():
     return dict(checklists=checklists)
 
 
-
+#also Iain
 @action('user_stats')
 @action.uses('user_stats.html')
 def user_stats():
     return dict()  
 
+
+#iain
 @action("api/user_stats/species", method=["GET"])
-@action.uses(db, auth)
+@action.uses(db, auth.user)
 def user_stats_species():
     user_id = auth.current_user.get("email")
     species = db(
         (db.checklists.observer_id == user_id) &
         (db.sightings.sampling_event_id == db.checklists.id) &
-        (db.sightings.common_name == db.species.id)
+        (db.sightings.species_id == db.species.id)
     ).select(db.species.common_name, distinct=True).as_list()
+
     return dict(species=[s["common_name"] for s in species])
-#iain
+
 @action("api/user_stats/trends", method=["GET"])
-@action.uses(db, auth)
+@action.uses(db, auth.user)
 def user_stats_trends():
     user_id = auth.current_user.get("email")
     trends = db(
         (db.checklists.observer_id == user_id)
     ).select(
         db.checklists.observation_date,
-        db.sightings.observation_count.sum(),
+        db.sightings.observation_count.sum().with_alias("total_count"),
         groupby=db.checklists.observation_date
     ).as_list()
+
     return dict(trends=[
-        {"date": t["observation_date"], "count": t["_extra"]["SUM(sightings.observation_count)"]}
+        {"date": t["observation_date"], "count": t["total_count"]}
         for t in trends
     ])
