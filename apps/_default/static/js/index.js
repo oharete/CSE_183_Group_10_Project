@@ -19,7 +19,8 @@ const app = Vue.createApp({
   methods: {
     initMap() {
       // Initialize the map with a default location in case geolocation fails
-      this.map = L.map("map").setView([37.7749, -122.4194], 10); // Default: San Francisco
+      this.map = L.map('map').setView([36.9905, -122.0584], 10);
+      console.log("Map initialized with default location.");
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -45,6 +46,7 @@ const app = Vue.createApp({
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
+            console.log("User's location:", { latitude, longitude });
             this.map.setView([latitude, longitude], 10); // Center map on user's location
           },
           (error) => {
@@ -55,9 +57,10 @@ const app = Vue.createApp({
           }
         );
       } else {
+        console.error("Geolocation is not supported by your browser.");
         alert("Geolocation is not supported by your browser.");
       }
-    },
+    },    
     updateHeatmap(data) {
       // Remove existing heatmap layer, if any
       if (this.heatLayer) {
@@ -147,7 +150,7 @@ const app = Vue.createApp({
 
     // Redirect to the Stats page
     goToStats() {
-      window.location.href = "/user_stats";
+      window.location.href = "/user_stats"; // maybe change if iian needs
     },
 
     // For checklist
@@ -198,8 +201,10 @@ const app = Vue.createApp({
       this.filteredSpecies.forEach((s) => (s.count = 0)); // Reset counts
     },
   },
+
   mounted() {
     this.initMap();
+    this.centerMapOnUser();
     this.fetchDensity(); // Load heatmap for all species by default
   },
 });
