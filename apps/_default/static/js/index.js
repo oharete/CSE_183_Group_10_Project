@@ -7,6 +7,11 @@ const app = Vue.createApp({
       drawingLayer: null, // Layer group for user-drawn shapes
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
+      userStatsData: { //Iain work start
+        speciesList: [], // Stores all species seen by the user
+        trends: [], // Stores bird-watching trends over time
+      },//Iain work end
+            
 
       //for checklist page
       searchQuery: "", // Search bar input
@@ -68,46 +73,113 @@ const app = Vue.createApp({
           console.error('Error fetching region statistics:', error);
         });
     },
+    // fetchSpecies() {
+    //   // Fetch species suggestions (same as before)
+    //   axios
+    //     .get(`/api/species?suggest=${this.selectedSpecies}`)
+    //     .then((response) => {
+    //       this.speciesSuggestions = response.data.species || [];
+    //     })
+    //     .catch((error) => {
+    //       console.error('Error fetching species suggestions:', error);
+    //     });
+    // },
     fetchSpecies() {
-      // Fetch species suggestions (same as before)
+      if (this.selectedSpecies.trim() === "") {
+        // Clear suggestions if the search box is empty
+        this.speciesSuggestions = [];
+        return;
+      }
+
       axios
-        .get(`/api/species?suggest=${this.selectedSpecies}`)
-        .then((response) => {
-          this.speciesSuggestions = response.data.species || [];
-        })
-        .catch((error) => {
-          console.error('Error fetching species suggestions:', error);
-        });
-    },
+          .get(`/api/species?suggest=${this.selectedSpecies}`)
+          .then((response) => {
+              this.speciesSuggestions = response.data.species.map((s) => ({
+                  id: s.id,
+                  name: s.common_name,
+              }));
+          })
+          .catch((error) => {
+              console.error("Error fetching species suggestions:", error);
+          });
+    },  
     selectSpecies(speciesName) {
       // Handle species selection (same as before)
       this.selectedSpecies = speciesName;
       this.speciesSuggestions = [];
       this.updateMapWithSpecies(speciesName);
     },
+    // updateMapWithSpecies(species) {
+    //   // Update map with species data (same as before)
+    //   axios
+    //     .get(`/api/density?species=${species}`)
+    //     .then((response) => {
+    //       const data = response.data.density;
+    //       this.map.eachLayer((layer) => {
+    //         if (layer instanceof L.Circle) {
+    //           this.map.removeLayer(layer);
+    //         }
+    //       });
+    //       data.forEach((point) => {
+    //         L.circle([point.lat, point.lng], {
+    //           radius: point.density * 10,
+    //           color: 'red',
+    //           fillOpacity: 0.5,
+    //         }).addTo(this.map);
+    //       });
+    //     })
+    //     .catch((error) => {
+    //       console.error('Error updating map with species data:', error);
+    //     });
+    // },
     updateMapWithSpecies(species) {
-      // Update map with species data (same as before)
       axios
-        .get(`/api/density?species=${species}`)
-        .then((response) => {
-          const data = response.data.density;
-          this.map.eachLayer((layer) => {
-            if (layer instanceof L.Circle) {
-              this.map.removeLayer(layer);
-            }
+          .get(`/api/density?species=${species}`)
+          .then(response => {
+              const data = response.data.density;
+              // Clear existing map layers except the drawing layer
+              this.map.eachLayer(layer => {
+                  if (layer !== this.drawingLayer && layer.options && layer.options.attribution !== undefined) {
+                      this.map.removeLayer(layer);
+                  }
+              });
+              // Add density markers to the map
+              data.forEach(point => {
+                  L.circle([point.lat, point.lng], {
+                      radius: point.density * 10, // Adjust size based on density
+                      color: 'red',
+                      fillOpacity: 0.5
+                  }).addTo(this.map);
+              });
+          })
+          .catch(error => {
+              console.error("Error updating map with species data:", error);
           });
-          data.forEach((point) => {
-            L.circle([point.lat, point.lng], {
-              radius: point.density * 10,
-              color: 'red',
-              fillOpacity: 0.5,
-            }).addTo(this.map);
-          });
+    },
+    //Iain work start
+    fetchUserStats() {
+      // Fetch species list for the user
+      fetch("/api/user_stats/species")
+        .then((response) => response.json())
+        .then((data) => {
+          this.userStatsData.speciesList = data.species;
         })
         .catch((error) => {
-          console.error('Error updating map with species data:', error);
+          console.error("Error fetching user stats (species list):", error);
+        });
+    
+      // Fetch bird-watching trends
+      fetch("/api/user_stats/trends")
+        .then((response) => response.json())
+        .then((data) => {
+          this.userStatsData.trends = data.trends;
+        })
+        .catch((error) => {
+          console.error("Error fetching user stats (trends):", error);
         });
     },
+    
+
     //for checklist
     fetchSpeciesChecklist() {
       // Fetch species filtered by the search query
