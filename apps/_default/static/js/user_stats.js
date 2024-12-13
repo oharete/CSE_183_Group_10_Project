@@ -5,34 +5,22 @@ const app = Vue.createApp({
   data() {
     return {
       searchQuery: "", // User's search input for species
+      selectedSpecies: "", // Selected species for trends
       speciesList: [], // List of species fetched from the backend
       trends: [], // Bird-watching trends over time
     };
   },
-  computed: {
-    // Dynamically filter the species list based on the search query
-    filteredSpecies() {
-      return this.speciesList.filter((species) =>
-        species.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
-    },
-  },
   methods: {
-    // Fetch the list of species the user has seen
-    fetchSpeciesList() {
+    // Fetch trends for a specific species
+    fetchTrendsForSpecies() {
+      if (!this.searchQuery) {
+        alert("Please enter a species name.");
+        return;
+      }
+      this.selectedSpecies = this.searchQuery;
+
       axios
-        .get("/api/user_stats/species")
-        .then((response) => {
-          this.speciesList = response.data.species || [];
-        })
-        .catch((error) => {
-          console.error("Error fetching species list:", error);
-        });
-    },
-    // Fetch the user's bird-watching trends
-    fetchTrends() {
-      axios
-        .get("/api/user_stats/trends")
+        .get(`/api/user_stats/trends?species=${encodeURIComponent(this.selectedSpecies)}`)
         .then((response) => {
           this.trends = response.data.trends || [];
           this.renderChart(); // Render the trends chart after data is fetched
@@ -53,7 +41,7 @@ const app = Vue.createApp({
           labels: labels,
           datasets: [
             {
-              label: "Bird Sightings Over Time",
+              label: `Trends for ${this.selectedSpecies}`,
               data: counts,
               borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 2,
@@ -81,9 +69,7 @@ const app = Vue.createApp({
     },
   },
   mounted() {
-    console.log("Vue is mounted!"); // Debugging message
-    this.fetchSpeciesList();
-    this.fetchTrends();
+    console.log("Vue app is mounted!");
   },
 });
 

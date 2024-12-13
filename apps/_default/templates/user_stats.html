@@ -10,27 +10,26 @@
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Stats</h1>
 
   <!-- Searchable Species List -->
-  <h2>Species You've Seen</h2>
+  <h2>Search for a Species</h2>
   <input
     type="text"
     v-model="searchQuery"
-    placeholder="Search species"
+    placeholder="Enter species name"
     class="input"
   />
-  <ul>
-    <!-- Use Vue.js `v-for` to render the list dynamically -->
-    <li v-for="species in filteredSpecies" :key="species">
-      {{ species }}
-    </li>
-  </ul>
-  <p v-if="filteredSpecies.length === 0">No species data available.</p>
+  <button @click="fetchTrendsForSpecies" class="button is-primary">
+    Show Trends
+  </button>
 
   <!-- Trends Visualization -->
   <h2>Your Bird-Watching Trends</h2>
   <canvas id="trendChart"></canvas>
-  <p v-if="trends.length === 0">No trends data available.</p>
+  <p v-if="trends.length === 0">No trends data available for the selected species.</p>
 </div>
 
 [[block page_scripts]]
+<script>
+  const selectedSpecies = null; // Ensures it's defined initially
+</script>
 <script src="/static/js/user_stats.js"></script>
 [[end]]
