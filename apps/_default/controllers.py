@@ -30,10 +30,14 @@ from yatl.helpers import A
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
 from py4web.utils.url_signer import URLSigner
 from .models import get_user_email
+
+import datetime
+
 import json
 from py4web.core import HTTP
 import uuid
 import datetime
+
 
 url_signer = URLSigner(session)
 
@@ -168,7 +172,7 @@ def checklists():
 #for checklist html
 #an endpoint to retrieve species filtered by the search query.
 @action("get_species", method=["GET"])
-@action.uses(db)
+@action.uses(db, auth)
 def get_species():
     query = request.query.get("query", "").strip().lower()
     print(f"Received query: {query}")
@@ -179,31 +183,49 @@ def get_species():
 @action("save_checklist", method=["POST"])
 @action.uses(db, auth)
 def save_checklist():
+    # Check if the user is logged in
+    
+    #if not auth.current_user:
+    #    return "Please log in to submit your checklist."  # Message if not logged in
+    
     data = request.json
     checklist_id = data.get("checklist_id")  # For updates
     species_data = data.get("species", [])  # Array of species and counts
-
+    print("im in save_checklist")
+    print(species_data)
+    
     if checklist_id:
+        # If the checklist_id is provided, update the existing checklist record
         checklist = db.checklists[checklist_id]
         if not checklist:
             raise HTTP(404, "Checklist not found.")
         checklist.update_record(
             observation_date=datetime.datetime.utcnow()
         )
+        # Remove all related sightings for the checklist, if any
         db(db.sightings.sampling_event_id == checklist_id).delete()
     else:
+        # Insert a new checklist record without using uuid, instead using auto-incremented ID
         checklist_id = db.checklists.insert(
-            sampling_event_id=str(uuid.uuid4()),
-            latitude=0,  # Placeholder
-            longitude=0,  # Placeholder
+            latitude=0,  # Placeholder latitude value
+            longitude=0,  # Placeholder longitude value
             observation_date=datetime.datetime.utcnow(),
             observer_id=auth.current_user.get("email"),
         )
 
+    # Insert all species data related to this checklist
     for item in species_data:
+        # Look up species_id based on common_name
+        species_row = db(db.species.common_name == item["common_name"]).select().first()
+        
+        if species_row:
+            species_id = species_row.id  # Use species_id (integer)
+        else:
+            raise HTTP(400, f"Species {item['common_name']} not found.")
+        
         db.sightings.insert(
-            sampling_event_id=checklist_id,
-            common_name=item["common_name"],
+            sampling_event_id=checklist_id,  # Linking sighting to the checklist by its ID
+            species_id=species_id,  # Insert the species_id instead of common_name
             observation_count=item["count"],
         )
 
@@ -216,16 +238,7 @@ def get_checklists():
     checklists = db(db.checklists.observer_id == auth.current_user.get("email")).select().as_list()
     return dict(checklists=checklists)
 
-#delete a checklist
-@action("delete_checklist/<checklist_id>", method=["DELETE"])
-@action.uses(db, auth)
-def delete_checklist(checklist_id):
-    checklist = db.checklists[checklist_id]
-    if not checklist:
-        raise HTTP(404, "Checklist not found.")
-    db(db.sightings.sampling_event_id == checklist_id).delete()
-    db(db.checklists.id == checklist_id).delete()
-    return dict(status="success")
+
 
 @action('user_stats')
 @action.uses('user_stats.html')

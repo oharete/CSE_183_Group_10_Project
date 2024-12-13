@@ -183,7 +183,7 @@ const app = Vue.createApp({
     //for checklist
     fetchSpeciesChecklist() {
       // Fetch species filtered by the search query
-      console.log("am i here?")
+     
       fetch(`${get_species_url}?query=${encodeURIComponent(this.searchQuery)}`)
         .then((response) => response.json())
         .then((data) => {
@@ -206,15 +206,15 @@ const app = Vue.createApp({
     },
     submitChecklist() {
       const species = this.filteredSpecies.filter((s) => s.count > 0); // Only species with a count > 0
-      fetch("/save_checklist", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ species }),
-      })
-          .then((response) => response.json())
-          .then((data) => {
+      if (species.length === 0) {
+          alert("No species with counts to submit.");
+          return;
+      }
+  
+      this.loading = true; // Set loading state
+      axios.post("/save_checklist", { species })
+          .then((response) => {
+              const data = response.data;
               if (data.status === "success") {
                   alert("Checklist submitted successfully!");
                   this.clearChecklist(); // Reset the checklist after submission
@@ -224,6 +224,12 @@ const app = Vue.createApp({
           })
           .catch((error) => {
               console.error("Error submitting checklist:", error);
+              alert(
+                  error.response?.data?.message || "An error occurred while submitting the checklist."
+              );
+          })
+          .finally(() => {
+              this.loading = false; // Reset loading state
           });
   },
   clearChecklist() {
