@@ -5,19 +5,40 @@ const app = Vue.createApp({
   data() {
     return {
       searchQuery: "", // User's search input for species
-      selectedSpecies: "", // Selected species for trends
-      speciesList: [], // List of species fetched from the backend
+      selectedSpecies: "", // Currently selected species for trends
+      speciesSuggestions: [], // Species suggestions based on search query
       trends: [], // Bird-watching trends over time
     };
   },
   methods: {
-    // Fetch trends for a specific species
-    fetchTrendsForSpecies() {
-      if (!this.searchQuery) {
-        alert("Please enter a species name.");
+    // Fetch species suggestions based on the search query
+    fetchSpeciesSuggestions() {
+      if (this.searchQuery.trim() === "") {
+        this.speciesSuggestions = [];
         return;
       }
-      this.selectedSpecies = this.searchQuery;
+      axios
+        .get(`/api/user_stats/species?suggest=${encodeURIComponent(this.searchQuery)}`)
+        .then((response) => {
+          this.speciesSuggestions = response.data.species.map((species) => species.common_name);
+        })
+        .catch((error) => {
+          console.error("Error fetching species suggestions:", error);
+        });
+    },
+    // Set the selected species and fetch trends
+    selectSpecies(species) {
+      this.selectedSpecies = species;
+      this.searchQuery = species; // Update search bar
+      this.speciesSuggestions = []; // Clear suggestions dropdown
+      this.fetchTrendsForSpecies(); // Fetch trends for the selected species
+    },
+    // Fetch trends for a specific species
+    fetchTrendsForSpecies() {
+      if (!this.selectedSpecies) {
+        alert("Please select a species.");
+        return;
+      }
 
       axios
         .get(`/api/user_stats/trends?species=${encodeURIComponent(this.selectedSpecies)}`)
@@ -35,7 +56,13 @@ const app = Vue.createApp({
       const labels = this.trends.map((t) => t.date);
       const counts = this.trends.map((t) => t.count);
 
-      new Chart(ctx, {
+      // Destroy any existing chart instance
+      if (window.trendChart) {
+        window.trendChart.destroy();
+      }
+
+      // Create a new chart
+      window.trendChart = new Chart(ctx, {
         type: "line",
         data: {
           labels: labels,
@@ -67,9 +94,16 @@ const app = Vue.createApp({
         },
       });
     },
-  },
-  mounted() {
-    console.log("Vue app is mounted!");
+    // Clear the selected species
+    clearSelection() {
+      this.selectedSpecies = "";
+      this.searchQuery = "";
+      this.speciesSuggestions = [];
+      this.trends = [];
+      if (window.trendChart) {
+        window.trendChart.destroy();
+      }
+    },
   },
 });
 

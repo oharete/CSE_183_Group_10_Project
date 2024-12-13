@@ -4,32 +4,56 @@
 [v-cloak] {
      display: none;
 }
+.suggestions-dropdown {
+  position: relative;
+  z-index: 1000;
+}
 </style>
 
 <div class="section" id="app" v-cloak>
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Stats</h1>
 
   <!-- Searchable Species List -->
-  <h2>Search for a Species</h2>
-  <input
-    type="text"
-    v-model="searchQuery"
-    placeholder="Enter species name"
-    class="input"
-  />
-  <button @click="fetchTrendsForSpecies" class="button is-primary">
-    Show Trends
-  </button>
+  <section class="section">
+    <div class="field">
+      <label class="label">Search for a Species</label>
+      <div class="control">
+        <input
+          type="text"
+          v-model="searchQuery"
+          class="input"
+          placeholder="Enter species name"
+          @input="fetchSpeciesSuggestions"
+        />
+      </div>
+      <!-- Suggestions Dropdown -->
+      <div v-if="speciesSuggestions.length > 0" class="dropdown is-active suggestions-dropdown">
+        <div class="dropdown-menu">
+          <div class="dropdown-content">
+            <a
+              v-for="species in speciesSuggestions"
+              :key="species"
+              class="dropdown-item"
+              @click="selectSpecies(species)"
+            >
+              {{=species}}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <!-- Trends Visualization -->
-  <h2>Your Bird-Watching Trends</h2>
-  <canvas id="trendChart"></canvas>
-  <p v-if="trends.length === 0">No trends data available for the selected species.</p>
+  <!-- Trends Section -->
+  <section class="section" v-if="selectedSpecies">
+    <h2>Trends for {{=selectedSpecies}}</h2>
+    <canvas id="trendChart"></canvas>
+    <p v-if="trends.length === 0">No trends data available for the selected species.</p>
+    <button class="button is-danger mt-2" @click="clearSelection">Clear Selection</button>
+  </section>
 </div>
 
 [[block page_scripts]]
-<script>
-  const selectedSpecies = null; // Ensures it's defined initially
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/js/user_stats.js"></script>
 [[end]]

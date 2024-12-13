@@ -260,13 +260,10 @@ def user_stats():
 @action("api/user_stats/species", method=["GET"])
 @action.uses(db)
 def user_stats_species():
-    # Fetch distinct species observed from the database
-    species = db(
-        (db.sightings.sampling_event_id == db.checklists.id) &
-        (db.sightings.common_name == db.species.common_name)
-    ).select(db.species.common_name, distinct=True).as_list()
+    query = request.query.get("suggest", "").strip().lower()
+    species = db(db.species.common_name.lower().contains(query)).select(db.species.common_name).as_list()
+    return dict(species=species)
 
-    return dict(species=[s["common_name"] for s in species])
 
 
 @action("api/user_stats/trends", method=["GET"])
@@ -284,18 +281,20 @@ def user_stats_trends():
 
     # Query trends for the specified species
     trends = db(
-        (db.sightings.common_name == species_name) &
+        (db.sightings.common_name == species_row.id) &
         (db.sightings.sampling_event_id == db.checklists.id)
     ).select(
         db.checklists.observation_date,
         db.sightings.observation_count.sum().with_alias("total_count"),
         groupby=db.checklists.observation_date
-    ).as_list()
+    )
 
     return dict(trends=[
-        {"date": t["observation_date"], "count": t["total_count"]}
-        for t in trends
+        {"date": str(trend["checklists.observation_date"]), "count": trend["total_count"]}
+        for trend in trends
     ])
+
+
 
 
 
