@@ -250,34 +250,32 @@ def user_stats():
 @action("api/user_stats/species", method=["GET"])
 @action.uses(db)
 def user_stats_species():
-    user_id = auth.current_user.get("email")
+    # Fetch distinct species observed from the database
     species = db(
-        (db.checklists.observer_id == user_id) &
         (db.sightings.sampling_event_id == db.checklists.id) &
-        (db.sightings.species_id == db.species.id)
+        (db.sightings.common_name == db.species.common_name)
     ).select(db.species.common_name, distinct=True).as_list()
 
     return dict(species=[s["common_name"] for s in species])
 
+
 @action("api/user_stats/trends", method=["GET"])
 @action.uses(db)
 def user_stats_trends():
-    user_id = auth.current_user.get("email")
     species_name = request.query.get("species", "").strip()
 
     if not species_name:
         return dict(error="Species name is required.", trends=[])
 
-    # Fetch the species ID for the given name
+    # Validate the species name exists in the database
     species_row = db(db.species.common_name == species_name).select().first()
     if not species_row:
         return dict(error="Species not found.", trends=[])
 
     # Query trends for the specified species
     trends = db(
-        (db.checklists.observer_id == user_id) &
-        (db.sightings.sampling_event_id == db.checklists.id) &
-        (db.sightings.species_id == species_row.id)
+        (db.sightings.common_name == species_name) &
+        (db.sightings.sampling_event_id == db.checklists.id)
     ).select(
         db.checklists.observation_date,
         db.sightings.observation_count.sum().with_alias("total_count"),
@@ -288,6 +286,7 @@ def user_stats_trends():
         {"date": t["observation_date"], "count": t["total_count"]}
         for t in trends
     ])
+
 
 
 
