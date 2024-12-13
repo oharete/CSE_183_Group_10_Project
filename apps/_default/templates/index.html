@@ -46,6 +46,10 @@
           </div>
         </div>
       </div>
+      <!-- Clear Selection Button -->
+      <button class="button is-danger mt-2" v-if="selectedSpecies" @click="clearSelection">
+        Clear Selection
+      </button>
     </div>
   </section>
 
@@ -74,18 +78,5 @@
   href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
 />
 <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script> <!-- Add Leaflet.heat -->
-<style>
-  /* Ensure the suggestions dropdown is above the map */
-  .suggestions-dropdown {
-    position: absolute;
-    z-index: 1000; /* High z-index to ensure it overlays the map */
-    background: white; /* Add background to dropdown for visibility */
-  }
-
-  #map {
-    position: relative;
-    z-index: 1; /* Map stays below other elements */
-  }
-</style>
 <script src="/static/js/index.js"></script>
 [[end]]
