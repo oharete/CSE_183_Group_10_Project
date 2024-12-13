@@ -60,7 +60,7 @@ const app = Vue.createApp({
         console.error("Geolocation is not supported by your browser.");
         alert("Geolocation is not supported by your browser.");
       }
-    },    
+    },
     updateHeatmap(data) {
       // Remove existing heatmap layer, if any
       if (this.heatLayer) {
@@ -138,15 +138,23 @@ const app = Vue.createApp({
         west: bounds.getWest(),
       };
 
-      // Redirect to the Location Page with region bounds as query parameters
-      const queryParams = new URLSearchParams(region).toString();
-      window.location.href = `/location?${queryParams}`;
+
+      // Store the selected region in localStorage
+      localStorage.setItem('selectedRegion', JSON.stringify(region));
+
+      // Redirect to the location page
+      window.location.href = '/location';
+
+
+      // // Redirect to the Location Page with region bounds as query parameters
+      // const queryParams = new URLSearchParams(region).toString();
+      // window.location.href = `/location?${queryParams}`;
     },
 
     // Redirect to the Checklist page
     goToChecklist() {
       window.location.href = "/checklist";
-    }, 
+    },
 
     // Redirect to the Stats page
     goToStats() {
@@ -210,4 +218,3 @@ const app = Vue.createApp({
 });
 
 app.mount('#app');
- 
