@@ -1,7 +1,7 @@
 Group 10 notes:
 
     Page creators:
-        index: tohare
+        index page: tohare
         checklist page: jfortez
         user_stats page: iasbrown
         location page: ltcase
