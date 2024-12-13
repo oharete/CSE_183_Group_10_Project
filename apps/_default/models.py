@@ -5,7 +5,7 @@ import os
 import csv
 import datetime
 from pydal.validators import IS_NOT_EMPTY, IS_INT_IN_RANGE, IS_FLOAT_IN_RANGE, IS_DATE
-from .common import db, Field, auth  # Adjust imports as needed for your environment
+from .common import db, Field, auth 
 
 def get_user_email():
     return auth.current_user.get('email') if auth.current_user else None

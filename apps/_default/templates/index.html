@@ -2,23 +2,33 @@
 
 <div class="section" id="app">
   <!-- Vue.js template for the index page -->
-  <section class="section">
+
+  <!-- Page Header -->
+  <section class="section has-text-centered">
     <h1 class="title">Bird Watching App</h1>
     <h2 class="subtitle">Explore bird sightings and statistics</h2>
   </section>
 
-  <!-- Navigation Buttons -->
+  <!-- Navigation Buttons Section -->
   <section class="section">
-    <div class="buttons">
-      <!-- Link to the Checklist Page -->
-      <button class="button is-link" @click="goToChecklist">Submit Checklist</button>
-      
-      <!-- Link to the Stats Page -->
-      <button class="button is-info" @click="goToStats">My Birding Stats</button>
+    <div class="buttons is-centered">
+      <button class="button is-link is-large" @click="goToChecklist">Submit Checklist</button>
+      <button class="button is-info is-large" @click="goToStats">My Birding Stats</button>
     </div>
   </section>
 
-  <!-- Species Selector -->
+  <!-- Random Bird Section -->
+  <section class="section">
+    <div class="box has-text-centered">
+      <h3 class="title is-4">Discover a Random Bird</h3>
+      <p class="subtitle is-5">Today's bird: <strong>{{ randomBird }}</strong></p>
+      <button class="button is-success is-medium" @click="fetchRandomBird">
+        Get Another Random Bird
+      </button>
+    </div>
+  </section>
+
+  <!-- Species Selector Section -->
   <section class="section">
     <div class="field">
       <label class="label">Select Species</label>
@@ -31,7 +41,6 @@
           @input="fetchSpecies"
         />
       </div>
-      <!-- Suggestions Dropdown -->
       <div v-if="speciesSuggestions.length > 0" class="dropdown is-active suggestions-dropdown">
         <div class="dropdown-menu">
           <div class="dropdown-content">
@@ -46,23 +55,25 @@
           </div>
         </div>
       </div>
-      <!-- Clear Selection Button -->
       <button class="button is-danger mt-2" v-if="selectedSpecies" @click="clearSelection">
         Clear Selection
       </button>
     </div>
   </section>
 
-  <!-- Map Section -->
+  <!-- Map Display Section -->
   <section class="section">
-    <div id="map" style="height: 500px;"></div>
+    <h3 class="title is-4 has-text-centered">Bird Density Map</h3>
+    <div id="map" style="height: 500px;" class="box"></div>
   </section>
 
-  <!-- Region Statistics Button -->
+  <!-- Region Statistics Button Section -->
   <section class="section">
-    <button class="button is-success" @click="showRegionStats">
-      Statistics on Selected Region
-    </button>
+    <div class="has-text-centered">
+      <button class="button is-success is-large" @click="showRegionStats">
+        Statistics on Selected Region
+      </button>
+    </div>
   </section>
 </div>
 
@@ -72,23 +83,29 @@
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <link
   rel="stylesheet"
   href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
 />
-<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script> <!-- Add Leaflet.heat -->
+
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
 <style>
-  /* Ensure the suggestions dropdown is above the map */
   .suggestions-dropdown {
     position: absolute;
-    z-index: 1000; /* High z-index to ensure it overlays the map */
-    background: white; /* Add background to dropdown for visibility */
+    z-index: 1000;
+    background: white;
+  }
+  .section {
+    padding: 1rem 1rem; /* Reduce padding */
   }
   #map {
     position: relative;
-    z-index: 1; /* Map stays below other elements */
+    z-index: 1;
   }
 </style>
+
 <script src="/static/js/index.js"></script>
 [[end]]

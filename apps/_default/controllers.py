@@ -26,81 +26,91 @@ Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app w
 """
 
 from py4web import action, request, abort, redirect, URL
+from py4web.core import HTTP
+from py4web.utils.grid import Grid, GridClassStyleBulma
+from py4web.utils.form import Form, FormStyleBulma
 from yatl.helpers import A
-from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
-from py4web.utils.url_signer import URLSigner
+from .common import (
+    db, session, T, cache, auth, logger, authenticated,
+    unauthenticated, flash, Field
+)
 from .models import get_user_email
 
 import datetime
-
 import json
-from py4web.core import HTTP
 import uuid
-import datetime
-from py4web.utils.grid import Grid, GridClassStyleBulma
-from py4web.utils.form import Form, FormStyleBulma
+import random
 
-
-url_signer = URLSigner(session)
 
 @action('index')
 @action.uses('index.html', db, auth)
 def index():
+    # Render the index.html template and provide access to the database (db) and authentication (auth) services
     return dict()
 
 @action('api/species', method=['GET'])
 @action.uses(db)
 def get_species():
+    # Get the 'suggest' query parameter from the request, stripping whitespace and converting it to lowercase
     query = request.query.get('suggest', '').strip().lower()
-    species = db(db.species.common_name.contains(query)).select().as_list()
-    return dict(species=species)
 
+    # Query the database for species whose common names contain the search query
+    species = db(db.species.common_name.contains(query)).select().as_list()
+
+    # Return the matching species as a dictionary
+    return dict(species=species)
 
 @action('api/density', method=['GET'])
 @action.uses(db)
 def density():
-    # Get the species parameter from the query string
+    # Retrieve the 'species' parameter from the query string
     species = request.query.get('species')
 
     if species:
         # Fetch density data for the specified species
         rows = db(
-            (db.sightings.common_name == db.species.id) &
-            (db.species.common_name == species) &
-            (db.sightings.sampling_event_id == db.checklists.id)
+            (db.sightings.common_name == db.species.id) &  # Match species ID in sightings and species tables
+            (db.species.common_name == species) &          # Filter by the specified species name
+            (db.sightings.sampling_event_id == db.checklists.id)  # Match sampling event IDs in sightings and checklists
         ).select(
-            db.checklists.latitude, db.checklists.longitude,
-            db.sightings.observation_count
+            db.checklists.latitude,  # Latitude of the sightings
+            db.checklists.longitude, # Longitude of the sightings
+            db.sightings.observation_count # Observation count for the sightings
         )
     else:
         # Fetch aggregated density data for all species
         rows = db(
-            (db.sightings.common_name == db.species.id) &
-            (db.sightings.sampling_event_id == db.checklists.id)
+            (db.sightings.common_name == db.species.id) &  # Match species ID in sightings and species tables
+            (db.sightings.sampling_event_id == db.checklists.id)  # Match sampling event IDs in sightings and checklists
         ).select(
-            db.checklists.latitude, db.checklists.longitude,
-            db.sightings.observation_count
+            db.checklists.latitude,  # Latitude of the sightings
+            db.checklists.longitude, # Longitude of the sightings
+            db.sightings.observation_count # Observation count for the sightings
         )
 
-    # Prepare density data
+    # Prepare density data for response
     density_data = []
     for row in rows:
+        # Append each sighting's data to the density_data list
         density_data.append({
-            'lat': row.checklists.latitude,
-            'lng': row.checklists.longitude,
-            'density': row.sightings.observation_count
+            'lat': row.checklists.latitude,  # Latitude of the sighting
+            'lng': row.checklists.longitude, # Longitude of the sighting
+            'density': row.sightings.observation_count  # Observation count (density)
         })
 
-    # Return the density data
+    # Return the density data as a dictionary
     return dict(density=density_data)
 
+@action('get_random_bird', method=['GET'])
+@action.uses(db)
+def get_random_bird():
+    rows = db(db.species).select()
+    if rows:
+        random_bird = random.choice(rows)
+        return dict(common_name=random_bird.common_name)
+    else:
+        return dict(error="No birds found")
 
-
-
-@action('test')
-@action.uses('test.html')
-def test():
-    return dict()
 
 
 @action('location')
@@ -298,26 +308,35 @@ def region_stats():
         # Get region bounds from the request
         data = request.json
         north, south, east, west = data['north'], data['south'], data['east'], data['west']
+        logger.info(f"Received bounds: north={north}, south={south}, east={east}, west={west}")
 
         # Query for sightings within the region bounds
         sightings = db(
             (db.checklists.latitude <= north) &
             (db.checklists.latitude >= south) &
             (db.checklists.longitude <= east) &
-            (db.checklists.longitude >= west)
-        ).select()
+            (db.checklists.longitude >= west) &
+            (db.sightings.sampling_event_id == db.checklists.id) &
+            (db.sightings.common_name == db.species.id)  # Corrected field name
+        ).select(
+            db.species.common_name,
+            db.sightings.observation_count,
+            db.checklists.id
+        )
 
         # Process the data
         species_stats = {}
         for sighting in sightings:
-            checklist_id = sighting.id
-            species = db(db.sightings.sampling_event_id == checklist_id).select()
-            for s in species:
-                species_name = db.species[s.common_name].common_name
-                if species_name not in species_stats:
-                    species_stats[species_name] = {'sightings': 0, 'checklists': 0}
-                species_stats[species_name]['sightings'] += s.observation_count
-                species_stats[species_name]['checklists'] += 1
+            species_name = sighting.species.common_name
+            checklist_id = sighting.checklists.id
+            if species_name not in species_stats:
+                species_stats[species_name] = {'sightings': 0, 'checklists': set()}
+            species_stats[species_name]['sightings'] += sighting.sightings.observation_count
+            species_stats[species_name]['checklists'].add(checklist_id)
+
+        # Convert checklists set to counts
+        for species in species_stats:
+            species_stats[species]['checklists'] = len(species_stats[species]['checklists'])
 
         # Get top contributors
         top_contributors = db(
@@ -325,11 +344,59 @@ def region_stats():
             (db.checklists.latitude >= south) &
             (db.checklists.longitude <= east) &
             (db.checklists.longitude >= west)
-        ).select(db.checklists.observer_id, db.checklists.id.count(), groupby=db.checklists.observer_id, orderby=~db.checklists.id.count())
-
-        return dict(
-            species_stats=species_stats,
-            top_contributors=[{'observer_id': c.observer_id, 'checklists': c['id.count']} for c in top_contributors]
+        ).select(
+            db.checklists.observer_id,
+            db.checklists.id.count().with_alias("checklist_count"),
+            groupby=db.checklists.observer_id,
+            orderby=~db.checklists.id.count()
         )
+
+        # Prepare response
+        response = dict(
+            species_stats=species_stats,
+            top_contributors=[
+                {'observer_id': c.checklists.observer_id, 'checklists': c.checklist_count}
+                for c in top_contributors
+            ]
+        )
+
+        logger.info(f"Region stats computed successfully: {response}")
+        return response
+
     except Exception as e:
-        return dict(error=str(e))
+        logger.error(f"Error in region_stats: {e}")
+        return dict(error=f"Error: {e}")
+
+#graph for locations page
+@action('api/species_graph', method=["GET"])
+@action.uses(db)
+def species_graph():
+    # Get the species name from the query parameters
+    species_name = request.query.get("species")
+    
+    if not species_name:
+        return dict(error="Species parameter is missing.")
+
+    # Find the species ID for the given species name
+    species_row = db(db.species.common_name == species_name).select().first()
+    if not species_row:
+        return dict(error=f"Species '{species_name}' not found.")
+
+    # Query the database for sightings trends
+    trends = db(
+        (db.sightings.common_name == species_row.id) &
+        (db.sightings.sampling_event_id == db.checklists.id)
+    ).select(
+        db.checklists.observation_date,
+        db.sightings.observation_count.sum().with_alias("total_count"),
+        groupby=db.checklists.observation_date
+    )
+
+    # Process the data into the format expected by the frontend
+    graph_data = [
+        {"date": str(trend["checklists.observation_date"]), "count": trend["total_count"]}
+        for trend in trends
+    ]
+
+    return dict(data=graph_data)
+
