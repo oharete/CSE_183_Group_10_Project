@@ -42,6 +42,110 @@ url_signer = URLSigner(session)
 def index():
     return dict()
 
+@action("api/species", method=["GET"])
+@action.uses(db)
+def api_species():
+    suggest = request.query.get("suggest", "").strip().lower()
+    species = db(db.species.common_name.lower().contains(suggest)).select().as_list()
+    return dict(species=species)
+
+@action("api/density", method=["GET"])
+@action.uses(db)
+def api_density():
+    try:
+        # Get the species name from the query parameter
+        species_name = request.query.get("species", "").strip()
+        
+        if not species_name:
+            print("Warning: 'species' query parameter is missing or empty.")
+            return dict(error="The 'species' query parameter is required.")
+        
+        # Fetch the species ID from the species table
+        species_row = db(db.species.common_name == species_name).select().first()
+        if not species_row:
+            print(f"No species found for name: {species_name}")
+            return dict(density=[])
+
+        # Query sightings and join with checklists for relevant data
+        rows = db(
+            (db.sightings.common_name == species_row.id) &
+            (db.sightings.sampling_event_id == db.checklists.id)
+        ).select(
+            db.checklists.latitude,
+            db.checklists.longitude,
+            db.sightings.observation_count
+        )
+        
+        if not rows:
+            print(f"No sightings found for species: {species_name}")
+            return dict(density=[])
+
+        # Construct the density response
+        density_data = [
+            {
+                "lat": row.checklists.latitude,
+                "lng": row.checklists.longitude,
+                "density": row.sightings.observation_count,
+            }
+            for row in rows
+            if row.checklists.latitude is not None and
+               row.checklists.longitude is not None and
+               row.sightings.observation_count is not None
+        ]
+
+        print(f"Density data retrieved for species: {species_name}, count: {len(density_data)}")
+        return dict(density=density_data)
+
+    except Exception as e:
+        print(f"Error processing /api/density request: {str(e)}")
+        raise HTTP(500, f"Internal Server Error: {str(e)}")
+
+@action("api/region_stats", method=["GET"])
+@action.uses(db)
+def api_region_stats():
+    try:
+        # Get region boundaries from query parameters
+        north = float(request.query.get("north"))
+        south = float(request.query.get("south"))
+        east = float(request.query.get("east"))
+        west = float(request.query.get("west"))
+
+        # Validate inputs
+        if not (south <= north and west <= east):
+            return dict(error="Invalid region boundaries.")
+
+        # Query sightings within the region
+        rows = db(
+            (db.checklists.latitude <= north) &
+            (db.checklists.latitude >= south) &
+            (db.checklists.longitude <= east) &
+            (db.checklists.longitude >= west) &
+            (db.sightings.sampling_event_id == db.checklists.id)
+        ).select(
+            db.sightings.common_name,
+            db.sightings.observation_count.sum().with_alias("total_observations"),
+            groupby=db.sightings.common_name
+        )
+
+        # Prepare response data
+        species_stats = [
+            {
+                "common_name": row.sightings.common_name,
+                "total_observations": row.total_observations,
+            }
+            for row in rows
+        ]
+
+        return dict(
+            total_species=len(species_stats),
+            species_stats=species_stats,
+        )
+
+    except Exception as e:
+        print(f"Error processing /api/region_stats request: {str(e)}")
+        raise HTTP(500, f"Internal Server Error: {str(e)}")
+
+
 @action('test')
 @action.uses('test.html')
 def test():
@@ -128,3 +232,29 @@ def delete_checklist(checklist_id):
 def user_stats():
     return dict()  
 
+@action("api/user_stats/species", method=["GET"])
+@action.uses(db, auth)
+def user_stats_species():
+    user_id = auth.current_user.get("email")
+    species = db(
+        (db.checklists.observer_id == user_id) &
+        (db.sightings.sampling_event_id == db.checklists.id) &
+        (db.sightings.common_name == db.species.id)
+    ).select(db.species.common_name, distinct=True).as_list()
+    return dict(species=[s["common_name"] for s in species])
+#iain
+@action("api/user_stats/trends", method=["GET"])
+@action.uses(db, auth)
+def user_stats_trends():
+    user_id = auth.current_user.get("email")
+    trends = db(
+        (db.checklists.observer_id == user_id)
+    ).select(
+        db.checklists.observation_date,
+        db.sightings.observation_count.sum(),
+        groupby=db.checklists.observation_date
+    ).as_list()
+    return dict(trends=[
+        {"date": t["observation_date"], "count": t["_extra"]["SUM(sightings.observation_count)"]}
+        for t in trends
+    ])
