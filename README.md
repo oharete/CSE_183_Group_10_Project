@@ -1,3 +1,17 @@
+Group 10 notes:
+    Page creators:
+        index: tohare
+        checklist page: jfortez
+        user_stats page: iasbrown
+        location page: ltcase
+
+    Launch instructions:
+        Launch server using ./py4web.sh
+        Connect at http://127.0.0.1:8000/
+        Navigate through pages using buttons
+
+
+
 # Project: Bird Watching App
 
 The goal of the project is to build a bird-watching app/site, loosely modeled on ebird.org.  The project has been chosen in a way that will let us play with many interesting features in web development, including developing responsive one-page apps, maps integration, user communication, and more. 
