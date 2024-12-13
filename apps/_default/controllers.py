@@ -358,3 +358,36 @@ def region_stats():
         logger.error(f"Error in region_stats: {e}")
         return dict(error=f"Error: {e}")
 
+#graph for locations page
+@action('api/species_graph', method=["GET"])
+@action.uses(db)
+def species_graph():
+    # Get the species name from the query parameters
+    species_name = request.query.get("species")
+    
+    if not species_name:
+        return dict(error="Species parameter is missing.")
+
+    # Find the species ID for the given species name
+    species_row = db(db.species.common_name == species_name).select().first()
+    if not species_row:
+        return dict(error=f"Species '{species_name}' not found.")
+
+    # Query the database for sightings trends
+    trends = db(
+        (db.sightings.common_name == species_row.id) &
+        (db.sightings.sampling_event_id == db.checklists.id)
+    ).select(
+        db.checklists.observation_date,
+        db.sightings.observation_count.sum().with_alias("total_count"),
+        groupby=db.checklists.observation_date
+    )
+
+    # Process the data into the format expected by the frontend
+    graph_data = [
+        {"date": str(trend["checklists.observation_date"]), "count": trend["total_count"]}
+        for trend in trends
+    ]
+
+    return dict(data=graph_data)
+
