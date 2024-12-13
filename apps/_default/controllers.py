@@ -49,79 +49,6 @@ def api_species():
     species = db(db.species.common_name.lower().contains(suggest)).select().as_list()
     return dict(species=species)
 
-# @action("api/density", method=["GET"])
-# @action.uses(db)
-# def get_density():
-#     species = request.query.get("species", "").strip().lower()
-#     if not species:
-#         return dict(density=[])  # No species provided, return empty density
-
-#     # Query the database for the species
-#     species_record = db(db.species.common_name.lower() == species).select().first()
-#     if not species_record:
-#         return dict(density=[])  # Species not found
-
-#     # Get all sightings of the species
-#     sightings = db(db.sightings.common_name == species_record.id).select()
-
-#     # Prepare density data
-#     density_data = []
-#     for sighting in sightings:
-#         checklist = db.checklists(sampling_event_id=sighting.sampling_event_id)
-#         if checklist:
-#             density_data.append({
-#                 "lat": checklist.latitude,
-#                 "lng": checklist.longitude,
-#                 "density": sighting.observation_count
-#             })
-
-#     return dict(density=density_data)
-
-# # @action("api/density", method=["GET"])
-# # @action.uses(db)
-# # def get_density():
-# #     species = request.query.get("species", "").strip().lower()
-# #     if not species:
-# #         return dict(density=[])  # No species provided, return empty density
-
-# #     # Debug: Log the incoming species
-# #     print(f"Requested species: {species}")
-
-# #     # Query the database for the species
-# #     species_record = db(db.species.common_name.lower() == species).select().first()
-# #     if not species_record:
-# #         print("Species not found in the database.")
-# #         return dict(density=[])  # Species not found
-
-# #     # Debug: Log the species ID
-# #     print(f"Species found: {species_record}")
-
-# #     # Get all sightings of the species
-# #     sightings = db(db.sightings.common_name == species_record.id).select()
-# #     if not sightings:
-# #         print("No sightings found for this species.")
-# #         return dict(density=[])
-
-# #     # Debug: Log the sightings
-# #     print(f"Sightings found: {sightings}")
-
-# #     # Prepare density data
-# #     density_data = []
-# #     for sighting in sightings:
-# #         checklist = db.checklists(sampling_event_id=sighting.sampling_event_id)
-# #         if checklist:
-# #             density_data.append({
-# #                 "lat": checklist.latitude,
-# #                 "lng": checklist.longitude,
-# #                 "density": sighting.observation_count
-# #             })
-
-# #     # Debug: Log the density data
-# #     print(f"Density data: {density_data}")
-
-# #     return dict(density=density_data)
-
-
 @action("api/density", method=["GET"])
 @action.uses(db)
 def api_density():
@@ -173,11 +100,50 @@ def api_density():
         print(f"Error processing /api/density request: {str(e)}")
         raise HTTP(500, f"Internal Server Error: {str(e)}")
 
-@action("debug_sightings", method=["GET"])
+@action("api/region_stats", method=["GET"])
 @action.uses(db)
-def debug_sightings():
-    sightings = db(db.sightings).select().as_list()
-    return dict(sightings=sightings)
+def api_region_stats():
+    try:
+        # Get region boundaries from query parameters
+        north = float(request.query.get("north"))
+        south = float(request.query.get("south"))
+        east = float(request.query.get("east"))
+        west = float(request.query.get("west"))
+
+        # Validate inputs
+        if not (south <= north and west <= east):
+            return dict(error="Invalid region boundaries.")
+
+        # Query sightings within the region
+        rows = db(
+            (db.checklists.latitude <= north) &
+            (db.checklists.latitude >= south) &
+            (db.checklists.longitude <= east) &
+            (db.checklists.longitude >= west) &
+            (db.sightings.sampling_event_id == db.checklists.id)
+        ).select(
+            db.sightings.common_name,
+            db.sightings.observation_count.sum().with_alias("total_observations"),
+            groupby=db.sightings.common_name
+        )
+
+        # Prepare response data
+        species_stats = [
+            {
+                "common_name": row.sightings.common_name,
+                "total_observations": row.total_observations,
+            }
+            for row in rows
+        ]
+
+        return dict(
+            total_species=len(species_stats),
+            species_stats=species_stats,
+        )
+
+    except Exception as e:
+        print(f"Error processing /api/region_stats request: {str(e)}")
+        raise HTTP(500, f"Internal Server Error: {str(e)}")
 
 
 @action('test')
