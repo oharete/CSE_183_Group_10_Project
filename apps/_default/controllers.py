@@ -299,26 +299,35 @@ def region_stats():
         # Get region bounds from the request
         data = request.json
         north, south, east, west = data['north'], data['south'], data['east'], data['west']
+        logger.info(f"Received bounds: north={north}, south={south}, east={east}, west={west}")
 
         # Query for sightings within the region bounds
         sightings = db(
             (db.checklists.latitude <= north) &
             (db.checklists.latitude >= south) &
             (db.checklists.longitude <= east) &
-            (db.checklists.longitude >= west)
-        ).select()
+            (db.checklists.longitude >= west) &
+            (db.sightings.sampling_event_id == db.checklists.id) &
+            (db.sightings.common_name == db.species.id)  # Corrected field name
+        ).select(
+            db.species.common_name,
+            db.sightings.observation_count,
+            db.checklists.id
+        )
 
         # Process the data
         species_stats = {}
         for sighting in sightings:
-            checklist_id = sighting.id
-            species = db(db.sightings.sampling_event_id == checklist_id).select()
-            for s in species:
-                species_name = db.species[s.common_name].common_name
-                if species_name not in species_stats:
-                    species_stats[species_name] = {'sightings': 0, 'checklists': 0}
-                species_stats[species_name]['sightings'] += s.observation_count
-                species_stats[species_name]['checklists'] += 1
+            species_name = sighting.species.common_name
+            checklist_id = sighting.checklists.id
+            if species_name not in species_stats:
+                species_stats[species_name] = {'sightings': 0, 'checklists': set()}
+            species_stats[species_name]['sightings'] += sighting.sightings.observation_count
+            species_stats[species_name]['checklists'].add(checklist_id)
+
+        # Convert checklists set to counts
+        for species in species_stats:
+            species_stats[species]['checklists'] = len(species_stats[species]['checklists'])
 
         # Get top contributors
         top_contributors = db(
@@ -326,11 +335,26 @@ def region_stats():
             (db.checklists.latitude >= south) &
             (db.checklists.longitude <= east) &
             (db.checklists.longitude >= west)
-        ).select(db.checklists.observer_id, db.checklists.id.count(), groupby=db.checklists.observer_id, orderby=~db.checklists.id.count())
-
-        return dict(
-            species_stats=species_stats,
-            top_contributors=[{'observer_id': c.observer_id, 'checklists': c['id.count']} for c in top_contributors]
+        ).select(
+            db.checklists.observer_id,
+            db.checklists.id.count().with_alias("checklist_count"),
+            groupby=db.checklists.observer_id,
+            orderby=~db.checklists.id.count()
         )
+
+        # Prepare response
+        response = dict(
+            species_stats=species_stats,
+            top_contributors=[
+                {'observer_id': c.checklists.observer_id, 'checklists': c.checklist_count}
+                for c in top_contributors
+            ]
+        )
+
+        logger.info(f"Region stats computed successfully: {response}")
+        return response
+
     except Exception as e:
-        return dict(error=str(e))
+        logger.error(f"Error in region_stats: {e}")
+        return dict(error=f"Error: {e}")
+
