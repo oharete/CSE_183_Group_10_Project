@@ -39,6 +39,7 @@ from .models import get_user_email
 import datetime
 import json
 import uuid
+import random
 
 
 @action('index')
@@ -99,6 +100,17 @@ def density():
 
     # Return the density data as a dictionary
     return dict(density=density_data)
+
+@action('get_random_bird', method=['GET'])
+@action.uses(db)
+def get_random_bird():
+    rows = db(db.species).select()
+    if rows:
+        random_bird = random.choice(rows)
+        return dict(common_name=random_bird.common_name)
+    else:
+        return dict(error="No birds found")
+
 
 
 @action('location')
