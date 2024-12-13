@@ -121,6 +121,10 @@ const app = Vue.createApp({
           console.error("Error fetching species suggestions:", error);
         });
     },
+    clearSelection() {
+      this.selectedSpecies = ''; // Clear the selected species
+      this.fetchDensity(); // Reload heatmap for all species
+    },  
     selectSpecies(speciesName) {
       // Handle species selection
       this.selectedSpecies = speciesName;

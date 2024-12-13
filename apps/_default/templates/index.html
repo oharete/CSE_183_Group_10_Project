@@ -46,6 +46,10 @@
           </div>
         </div>
       </div>
+      <!-- Clear Selection Button -->
+      <button class="button is-danger mt-2" v-if="selectedSpecies" @click="clearSelection">
+        Clear Selection
+      </button>
     </div>
   </section>
 
@@ -81,7 +85,6 @@
     z-index: 1000; /* High z-index to ensure it overlays the map */
     background: white; /* Add background to dropdown for visibility */
   }
-
   #map {
     position: relative;
     z-index: 1; /* Map stays below other elements */
