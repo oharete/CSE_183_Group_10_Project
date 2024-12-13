@@ -56,12 +56,12 @@ const app = Vue.createApp({
       const labels = this.trends.map((t) => t.date);
       const counts = this.trends.map((t) => t.count);
 
-      // Destroy any existing chart instance
-      if (window.trendChart) {
+      // Check and destroy the existing chart instance
+      if (window.trendChart instanceof Chart) {
         window.trendChart.destroy();
       }
 
-      // Create a new chart
+      // Create a new chart instance
       window.trendChart = new Chart(ctx, {
         type: "line",
         data: {
@@ -100,7 +100,7 @@ const app = Vue.createApp({
       this.searchQuery = "";
       this.speciesSuggestions = [];
       this.trends = [];
-      if (window.trendChart) {
+      if (window.trendChart instanceof Chart) {
         window.trendChart.destroy();
       }
     },
