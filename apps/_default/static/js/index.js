@@ -18,29 +18,45 @@ const app = Vue.createApp({
   },
   methods: {
     initMap() {
-      // Initialize the map
-      this.map = L.map('map').setView([37.7749, -122.4194], 10);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      // Initialize the map with a default location in case geolocation fails
+      this.map = L.map("map").setView([37.7749, -122.4194], 10); // Default: San Francisco
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(this.map);
 
-      // Add a drawing layer
+      // Add drawing layer
       this.drawingLayer = L.featureGroup().addTo(this.map);
-
-      // Add drawing controls
       const drawControl = new L.Control.Draw({
         edit: { featureGroup: this.drawingLayer },
         draw: { rectangle: true },
       });
       this.map.addControl(drawControl);
 
-      // Event listener for when a rectangle is created
+      // Event listener for rectangle creation
       this.map.on(L.Draw.Event.CREATED, (event) => {
         const layer = event.layer;
-        this.drawingLayer.clearLayers(); // Remove previous shapes
+        this.drawingLayer.clearLayers(); // Clear existing shapes
         this.drawingLayer.addLayer(layer); // Add the new rectangle
       });
+    },
+    centerMapOnUser() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            this.map.setView([latitude, longitude], 10); // Center map on user's location
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            alert(
+              "Unable to retrieve your location. The map will remain on the default region."
+            );
+          }
+        );
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
     },
     updateHeatmap(data) {
       // Remove existing heatmap layer, if any
@@ -108,17 +124,17 @@ const app = Vue.createApp({
     showRegionStats() {
       const layers = this.drawingLayer.getLayers();
       if (layers.length === 0) {
-          alert('Please draw a region on the map first.');
-          return;
+        alert('Please draw a region on the map first.');
+        return;
       }
       const bounds = layers[0].getBounds();
       const region = {
-          north: bounds.getNorth(),
-          south: bounds.getSouth(),
-          east: bounds.getEast(),
-          west: bounds.getWest(),
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest(),
       };
-  
+
       // Redirect to the Location Page with region bounds as query parameters
       const queryParams = new URLSearchParams(region).toString();
       window.location.href = `/location?${queryParams}`;
