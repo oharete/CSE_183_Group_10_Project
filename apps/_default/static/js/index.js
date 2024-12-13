@@ -8,6 +8,7 @@ const app = Vue.createApp({
       heatLayer: null, // Heatmap layer instance
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
+      loadingHeatmap: false, // Show loading indicator while heatmap is being updated
 
       // For checklist page
       searchQuery: "", // Search bar input
@@ -101,6 +102,26 @@ const app = Vue.createApp({
       this.selectedSpecies = speciesName;
       this.speciesSuggestions = [];
       this.fetchDensity(); // Update heatmap with selected species
+    },
+
+    // Redirect to the Location page
+    showRegionStats() {
+      const layers = this.drawingLayer.getLayers();
+      if (layers.length === 0) {
+          alert('Please draw a region on the map first.');
+          return;
+      }
+      const bounds = layers[0].getBounds();
+      const region = {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest(),
+      };
+  
+      // Redirect to the Location Page with region bounds as query parameters
+      const queryParams = new URLSearchParams(region).toString();
+      window.location.href = `/location?${queryParams}`;
     },
 
     // Redirect to the Checklist page

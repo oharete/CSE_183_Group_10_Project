@@ -90,50 +90,44 @@ def density():
     return dict(density=density_data)
 
 
-@action("api/region_stats", method=["GET"])
-@action.uses(db)
-def api_region_stats():
-    try:
-        # Get region boundaries from query parameters
-        north = float(request.query.get("north"))
-        south = float(request.query.get("south"))
-        east = float(request.query.get("east"))
-        west = float(request.query.get("west"))
+# @action("region_stats", method=["POST"])
+# @action.uses(db)
+# def region_stats():
+#     try:
+#         # Extract bounds from the request
+#         north = float(request.json.get("north"))
+#         south = float(request.json.get("south"))
+#         east = float(request.json.get("east"))
+#         west = float(request.json.get("west"))
 
-        # Validate inputs
-        if not (south <= north and west <= east):
-            return dict(error="Invalid region boundaries.")
+#         # Validate bounds
+#         if not (north and south and east and west):
+#             raise ValueError("Invalid region bounds")
 
-        # Query sightings within the region
-        rows = db(
-            (db.checklists.latitude <= north) &
-            (db.checklists.latitude >= south) &
-            (db.checklists.longitude <= east) &
-            (db.checklists.longitude >= west) &
-            (db.sightings.sampling_event_id == db.checklists.id)
-        ).select(
-            db.sightings.common_name,
-            db.sightings.observation_count.sum().with_alias("total_observations"),
-            groupby=db.sightings.common_name
-        )
+#         # Query the database for sightings within the region
+#         checklists_in_region = db(
+#             (db.checklists.latitude <= north) &
+#             (db.checklists.latitude >= south) &
+#             (db.checklists.longitude <= east) &
+#             (db.checklists.longitude >= west)
+#         ).select()
 
-        # Prepare response data
-        species_stats = [
-            {
-                "common_name": row.sightings.common_name,
-                "total_observations": row.total_observations,
-            }
-            for row in rows
-        ]
+#         checklist_ids = [row.id for row in checklists_in_region]
 
-        return dict(
-            total_species=len(species_stats),
-            species_stats=species_stats,
-        )
+#         # Aggregate data for sightings
+#         sightings = db(db.sightings.sampling_event_id.belongs(checklist_ids)).select()
+#         species_count = len(set(sighting.common_name for sighting in sightings))
+#         observation_count = sum(sighting.observation_count for sighting in sightings)
 
-    except Exception as e:
-        print(f"Error processing /api/region_stats request: {str(e)}")
-        raise HTTP(500, f"Internal Server Error: {str(e)}")
+#         return dict(
+#             species_count=species_count,
+#             observation_count=observation_count,
+#             checklist_count=len(checklist_ids)
+#         )
+
+#     except Exception as e:
+#         return dict(error=str(e))
+
 
 
 
