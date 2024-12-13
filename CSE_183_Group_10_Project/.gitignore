@@ -1,8 +1,0 @@
-*.pyc
-__pycache__/*
-databases/*
-!databases/README.md
-.DS_Store
-apps/.DS_Store
-apps/_default/.DS_Store
-apps/_default/static/.DS_Store
