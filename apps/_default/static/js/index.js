@@ -146,11 +146,11 @@ const app = Vue.createApp({
     // Redirect to the Checklist page
     goToChecklist() {
       window.location.href = "/checklist";
-    },
+    }, 
 
     // Redirect to the Stats page
     goToStats() {
-      window.location.href = "/user_stats"; // maybe change if iian needs
+      window.location.href = "/user_stats"; // maybe change if iian needs 
     },
 
     // For checklist
