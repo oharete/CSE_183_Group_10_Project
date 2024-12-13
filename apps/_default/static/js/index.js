@@ -39,11 +39,29 @@ const app = Vue.createApp({
       // Add a drawing layer for shapes
       this.drawingLayer = L.featureGroup().addTo(this.map);
 
-      // Enable drawing controls with options for editing and drawing rectangles
+      // Configure the draw control to enable only rectangle drawing
       const drawControl = new L.Control.Draw({
-        edit: { featureGroup: this.drawingLayer },
-        draw: { rectangle: true },
+        edit: {
+          featureGroup: this.drawingLayer, // Allow editing of drawn rectangles
+          remove: true, // Allow removing of drawn rectangles
+        },
+        draw: {
+          rectangle: {
+            shapeOptions: {
+              color: '#3388ff', // Border color of the rectangle
+              weight: 2,        // Border thickness
+            },
+            showArea: true, // Show the area of the rectangle being drawn
+          },
+          polyline: false,       // Disable polyline
+          polygon: false,        // Disable polygon
+          circle: false,         // Disable circle
+          circlemarker: false,   // Disable circle marker
+          marker: false,         // Disable marker
+        },
       });
+
+      // Add the drawing control to the map
       this.map.addControl(drawControl);
 
       // Handle rectangle creation event
@@ -51,8 +69,12 @@ const app = Vue.createApp({
         const layer = event.layer;
         this.drawingLayer.clearLayers(); // Remove any existing shapes
         this.drawingLayer.addLayer(layer); // Add the new rectangle to the drawing layer
+        console.log("Rectangle created:", layer.getBounds());
       });
+
+      console.log("Drawing tools initialized with rectangle only.");
     },
+
 
     centerMapOnUser() {
       // Check if geolocation is available in the browser
