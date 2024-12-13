@@ -42,8 +42,13 @@ const app = Vue.createApp({
       this.graphLoading = true; // Set graph loading state
       axios.get(`/api/species_graph?species=${species}`)
         .then(response => {
-          this.graphData = response.data;
-          this.renderGraph();
+          this.graphData = response.data.data; // Ensure correct data property
+          console.log("Graph Data for Rendering:", this.graphData);
+
+          // Delay rendering until DOM updates
+          this.$nextTick(() => {
+            this.renderGraph();
+          });
         })
         .catch(error => {
           alert("An error occurred while fetching graph data.");
@@ -55,11 +60,21 @@ const app = Vue.createApp({
     },
     renderGraph() {
       const canvas = document.getElementById('sightingsGraph');
+      if (!canvas) {
+        console.error("Canvas element with ID 'sightingsGraph' not found.");
+        return;
+      }
+
       const ctx = canvas.getContext('2d');
-      
+
       // Clear previous graph if any
       if (canvas.chart) {
         canvas.chart.destroy();
+      }
+
+      if (!this.graphData || this.graphData.length === 0) {
+        console.warn("No data available for rendering the graph.");
+        return;
       }
 
       // Render new graph
@@ -84,9 +99,15 @@ const app = Vue.createApp({
           },
         },
       });
+      console.log("Graph successfully rendered.");
     },
     clearGraph() {
       const canvas = document.getElementById('sightingsGraph');
+      if (!canvas) {
+        console.error("Canvas element with ID 'sightingsGraph' not found.");
+        return;
+      }
+
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear graph canvas
     },
@@ -97,4 +118,3 @@ const app = Vue.createApp({
 });
 
 app.mount('#app');
-
