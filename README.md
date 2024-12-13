@@ -5,6 +5,9 @@ Group 10 notes:
         user_stats page: iasbrown
         location page: ltcase
 
+    github repo:
+        https://github.com/oharete/CSE_183_Group_10_Project
+
     Launch instructions:
         Launch server using ./py4web.sh
         Connect at http://127.0.0.1:8000/
