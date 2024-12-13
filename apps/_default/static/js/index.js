@@ -56,7 +56,7 @@ const app = Vue.createApp({
       }).addTo(this.map);
     },
     fetchDensity() {
-      // Fetch density data from the API
+      // Fetch density data for the selected species or all species
       const speciesQuery = this.selectedSpecies
         ? `?species=${encodeURIComponent(this.selectedSpecies)}`
         : '';
@@ -66,7 +66,11 @@ const app = Vue.createApp({
           if (response.data.density && response.data.density.length > 0) {
             this.updateHeatmap(response.data.density);
           } else {
-            alert('No density data available for the selected species.');
+            alert(
+              this.selectedSpecies
+                ? `No density data available for species: ${this.selectedSpecies}.`
+                : 'No density data available for all species.'
+            );
           }
         })
         .catch((error) => {
@@ -159,7 +163,7 @@ const app = Vue.createApp({
   },
   mounted() {
     this.initMap();
-    this.fetchDensity(); // Load heatmap with all species by default
+    this.fetchDensity(); // Load heatmap for all species by default
   },
 });
 

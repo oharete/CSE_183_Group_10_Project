@@ -50,56 +50,45 @@ def get_species():
     species = db(db.species.common_name.contains(query)).select().as_list()
     return dict(species=species)
 
-@action("api/density", method=["GET"])
-@action.uses(db)
-def api_density():
-    try:
-        # Get the species name from the query parameter
-        species_name = request.query.get("species", "").strip()
-        
-        if not species_name:
-            print("Warning: 'species' query parameter is missing or empty.")
-            return dict(error="The 'species' query parameter is required.")
-        
-        # Fetch the species ID from the species table
-        species_row = db(db.species.common_name == species_name).select().first()
-        if not species_row:
-            print(f"No species found for name: {species_name}")
-            return dict(density=[])
 
-        # Query sightings and join with checklists for relevant data
+@action('api/density', method=['GET'])
+@action.uses(db)
+def density():
+    # Get the species parameter from the query string
+    species = request.query.get('species')
+
+    if species:
+        # Fetch density data for the specified species
         rows = db(
-            (db.sightings.common_name == species_row.id) &
+            (db.sightings.common_name == db.species.id) &
+            (db.species.common_name == species) &
             (db.sightings.sampling_event_id == db.checklists.id)
         ).select(
-            db.checklists.latitude,
-            db.checklists.longitude,
+            db.checklists.latitude, db.checklists.longitude,
             db.sightings.observation_count
         )
-        
-        if not rows:
-            print(f"No sightings found for species: {species_name}")
-            return dict(density=[])
+    else:
+        # Fetch aggregated density data for all species
+        rows = db(
+            (db.sightings.common_name == db.species.id) &
+            (db.sightings.sampling_event_id == db.checklists.id)
+        ).select(
+            db.checklists.latitude, db.checklists.longitude,
+            db.sightings.observation_count
+        )
 
-        # Construct the density response
-        density_data = [
-            {
-                "lat": row.checklists.latitude,
-                "lng": row.checklists.longitude,
-                "density": row.sightings.observation_count,
-            }
-            for row in rows
-            if row.checklists.latitude is not None and
-               row.checklists.longitude is not None and
-               row.sightings.observation_count is not None
-        ]
+    # Prepare density data
+    density_data = []
+    for row in rows:
+        density_data.append({
+            'lat': row.checklists.latitude,
+            'lng': row.checklists.longitude,
+            'density': row.sightings.observation_count
+        })
 
-        print(f"Density data retrieved for species: {species_name}, count: {len(density_data)}")
-        return dict(density=density_data)
+    # Return the density data
+    return dict(density=density_data)
 
-    except Exception as e:
-        print(f"Error processing /api/density request: {str(e)}")
-        raise HTTP(500, f"Internal Server Error: {str(e)}")
 
 @action("api/region_stats", method=["GET"])
 @action.uses(db)
