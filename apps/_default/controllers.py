@@ -26,81 +26,79 @@ Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app w
 """
 
 from py4web import action, request, abort, redirect, URL
+from py4web.core import HTTP
+from py4web.utils.grid import Grid, GridClassStyleBulma
+from py4web.utils.form import Form, FormStyleBulma
 from yatl.helpers import A
-from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
-from py4web.utils.url_signer import URLSigner
+from .common import (
+    db, session, T, cache, auth, logger, authenticated,
+    unauthenticated, flash, Field
+)
 from .models import get_user_email
 
 import datetime
-
 import json
-from py4web.core import HTTP
 import uuid
-import datetime
-from py4web.utils.grid import Grid, GridClassStyleBulma
-from py4web.utils.form import Form, FormStyleBulma
 
-
-url_signer = URLSigner(session)
 
 @action('index')
 @action.uses('index.html', db, auth)
 def index():
+    # Render the index.html template and provide access to the database (db) and authentication (auth) services
     return dict()
 
 @action('api/species', method=['GET'])
 @action.uses(db)
 def get_species():
+    # Get the 'suggest' query parameter from the request, stripping whitespace and converting it to lowercase
     query = request.query.get('suggest', '').strip().lower()
-    species = db(db.species.common_name.contains(query)).select().as_list()
-    return dict(species=species)
 
+    # Query the database for species whose common names contain the search query
+    species = db(db.species.common_name.contains(query)).select().as_list()
+
+    # Return the matching species as a dictionary
+    return dict(species=species)
 
 @action('api/density', method=['GET'])
 @action.uses(db)
 def density():
-    # Get the species parameter from the query string
+    # Retrieve the 'species' parameter from the query string
     species = request.query.get('species')
 
     if species:
         # Fetch density data for the specified species
         rows = db(
-            (db.sightings.common_name == db.species.id) &
-            (db.species.common_name == species) &
-            (db.sightings.sampling_event_id == db.checklists.id)
+            (db.sightings.common_name == db.species.id) &  # Match species ID in sightings and species tables
+            (db.species.common_name == species) &          # Filter by the specified species name
+            (db.sightings.sampling_event_id == db.checklists.id)  # Match sampling event IDs in sightings and checklists
         ).select(
-            db.checklists.latitude, db.checklists.longitude,
-            db.sightings.observation_count
+            db.checklists.latitude,  # Latitude of the sightings
+            db.checklists.longitude, # Longitude of the sightings
+            db.sightings.observation_count # Observation count for the sightings
         )
     else:
         # Fetch aggregated density data for all species
         rows = db(
-            (db.sightings.common_name == db.species.id) &
-            (db.sightings.sampling_event_id == db.checklists.id)
+            (db.sightings.common_name == db.species.id) &  # Match species ID in sightings and species tables
+            (db.sightings.sampling_event_id == db.checklists.id)  # Match sampling event IDs in sightings and checklists
         ).select(
-            db.checklists.latitude, db.checklists.longitude,
-            db.sightings.observation_count
+            db.checklists.latitude,  # Latitude of the sightings
+            db.checklists.longitude, # Longitude of the sightings
+            db.sightings.observation_count # Observation count for the sightings
         )
 
-    # Prepare density data
+    # Prepare density data for response
     density_data = []
     for row in rows:
+        # Append each sighting's data to the density_data list
         density_data.append({
-            'lat': row.checklists.latitude,
-            'lng': row.checklists.longitude,
-            'density': row.sightings.observation_count
+            'lat': row.checklists.latitude,  # Latitude of the sighting
+            'lng': row.checklists.longitude, # Longitude of the sighting
+            'density': row.sightings.observation_count  # Observation count (density)
         })
 
-    # Return the density data
+    # Return the density data as a dictionary
     return dict(density=density_data)
-
-
-
-
-@action('test')
-@action.uses('test.html')
-def test():
-    return dict()
 
 
 @action('location')

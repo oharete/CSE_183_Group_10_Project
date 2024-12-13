@@ -3,26 +3,28 @@
 <div class="section" id="app">
   <!-- Vue.js template for the index page -->
   <section class="section">
+    <!-- Page Title -->
     <h1 class="title">Bird Watching App</h1>
     <h2 class="subtitle">Explore bird sightings and statistics</h2>
   </section>
 
-  <!-- Navigation Buttons -->
+  <!-- Navigation Buttons Section -->
   <section class="section">
     <div class="buttons">
-      <!-- Link to the Checklist Page -->
+      <!-- Button to navigate to the Checklist Page -->
       <button class="button is-link" @click="goToChecklist">Submit Checklist</button>
       
-      <!-- Link to the Stats Page -->
+      <!-- Button to navigate to the Stats Page -->
       <button class="button is-info" @click="goToStats">My Birding Stats</button>
     </div>
   </section>
 
-  <!-- Species Selector -->
+  <!-- Species Selector Section -->
   <section class="section">
     <div class="field">
       <label class="label">Select Species</label>
       <div class="control">
+        <!-- Input field for species search -->
         <input
           type="text"
           class="input"
@@ -31,10 +33,11 @@
           @input="fetchSpecies"
         />
       </div>
-      <!-- Suggestions Dropdown -->
+      <!-- Dropdown for species suggestions -->
       <div v-if="speciesSuggestions.length > 0" class="dropdown is-active suggestions-dropdown">
         <div class="dropdown-menu">
           <div class="dropdown-content">
+            <!-- List of suggestions rendered dynamically -->
             <a
               v-for="species in speciesSuggestions"
               :key="species.id"
@@ -46,20 +49,22 @@
           </div>
         </div>
       </div>
-      <!-- Clear Selection Button -->
+      <!-- Button to clear the selected species -->
       <button class="button is-danger mt-2" v-if="selectedSpecies" @click="clearSelection">
         Clear Selection
       </button>
     </div>
   </section>
 
-  <!-- Map Section -->
+  <!-- Map Display Section -->
   <section class="section">
+    <!-- Map container for displaying Leaflet map -->
     <div id="map" style="height: 500px;"></div>
   </section>
 
-  <!-- Region Statistics Button -->
+  <!-- Region Statistics Button Section -->
   <section class="section">
+    <!-- Button to fetch statistics for the selected region -->
     <button class="button is-success" @click="showRegionStats">
       Statistics on Selected Region
     </button>
@@ -67,28 +72,36 @@
 </div>
 
 [[block page_scripts]]
+<!-- Leaflet library for maps -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 />
+
+<!-- Leaflet Draw plugin for drawing shapes -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <link
   rel="stylesheet"
   href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
 />
-<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script> <!-- Add Leaflet.heat -->
+
+<!-- Leaflet Heatmap plugin for heatmap visualization -->
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
 <style>
-  /* Ensure the suggestions dropdown is above the map */
+  /* Ensure the species suggestions dropdown is visible above the map */
   .suggestions-dropdown {
     position: absolute;
-    z-index: 1000; /* High z-index to ensure it overlays the map */
-    background: white; /* Add background to dropdown for visibility */
+    z-index: 1000; /* High z-index to overlay the map */
+    background: white; /* Add background for better visibility */
   }
   #map {
     position: relative;
-    z-index: 1; /* Map stays below other elements */
+    z-index: 1; /* Keep the map below other elements */
   }
 </style>
+
+<!-- Load the custom JavaScript file for handling app functionality -->
 <script src="/static/js/index.js"></script>
 [[end]]
