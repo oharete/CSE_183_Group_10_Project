@@ -29,7 +29,14 @@ db.define_table(
     Field("observer_id", requires=IS_NOT_EMPTY()),
     Field("duration_minutes", "double"),
 )
-
+# User-Checklist association table 
+db.define_table(
+    "user_checklists",
+    Field('user_email', default=get_user_email),
+    Field("checklist_id", "reference checklists", requires=IS_NOT_EMPTY()),
+    Field("species_id", "reference species", requires=IS_NOT_EMPTY()),
+    Field("observation_count", "integer", requires=IS_INT_IN_RANGE(1, None)),
+)
 db.define_table(
     "sightings",
     Field("sampling_event_id", "reference checklists", requires=IS_NOT_EMPTY()),

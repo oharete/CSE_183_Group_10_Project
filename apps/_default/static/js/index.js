@@ -269,28 +269,9 @@ const app = Vue.createApp({
     // },
     /////////////////// old code from merge issue, leaving for now just in case
 
-    //Iain work start
-    fetchUserStats() {
-      // Fetch species list for the user
-      fetch("/api/user_stats/species")
-        .then((response) => response.json())
-        .then((data) => {
-          this.userStatsData.speciesList = data.species;
-        })
-        .catch((error) => {
-          console.error("Error fetching user stats (species list):", error);
-        });
     
-      // Fetch bird-watching trends
-      fetch("/api/user_stats/trends")
-        .then((response) => response.json())
-        .then((data) => {
-          this.userStatsData.trends = data.trends;
-        })
-        .catch((error) => {
-          console.error("Error fetching user stats (trends):", error);
-        });
-    },
+  
+  
 
     // For checklist
     
