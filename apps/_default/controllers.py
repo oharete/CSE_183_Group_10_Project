@@ -37,6 +37,8 @@ import json
 from py4web.core import HTTP
 import uuid
 import datetime
+from py4web.utils.grid import Grid, GridClassStyleBulma
+from py4web.utils.form import Form, FormStyleBulma
 
 
 url_signer = URLSigner(session)
@@ -107,7 +109,7 @@ def species():
     return dict()  
 
 @action('checklist')
-@action.uses('checklist.html', db)
+@action.uses('checklist.html', db, auth, session)
 def checklists():
     return dict( 
         get_species_url=URL("get_species"),
@@ -117,38 +119,44 @@ def checklists():
 #for checklist html
 #an endpoint to retrieve species filtered by the search query.
 @action("get_species", method=["GET"])
-@action.uses(db, auth)
+@action.uses(db, auth, session)
 def get_species():
     query = request.query.get("query", "").strip().lower()
     print(f"Received query: {query}")
     species = db(db.species.common_name.contains(query)).select().as_list()
     return dict(species=species)
 
-# an endpoint to save the checklist to the database.
 @action("save_checklist", method=["POST"])
-@action.uses(db, auth)
+@action.uses(db, auth, session)
 def save_checklist():
     # Check if the user is logged in
-    
-    #if not auth.current_user:
-    #    return "Please log in to submit your checklist."  # Message if not logged in
-    
+    if not auth.current_user:
+        raise HTTP(403, "Please log in to submit your checklist.")  # Unauthorized if not logged in
+
     data = request.json
     checklist_id = data.get("checklist_id")  # For updates
     species_data = data.get("species", [])  # Array of species and counts
-    print("im in save_checklist")
-    print(species_data)
+    print("this is species_data", species_data)
+    
+    # Validate that species_data is not empty
+    if not species_data:
+        raise HTTP(400, "Species data is required.")  # Bad Request if no species data provided
     
     if checklist_id:
         # If the checklist_id is provided, update the existing checklist record
-        checklist = db.checklists[checklist_id]
+        checklist = db.checklists.get(checklist_id)
         if not checklist:
             raise HTTP(404, "Checklist not found.")
+        
+        # Update the checklist observation date and observer ID (if needed)
         checklist.update_record(
-            observation_date=datetime.datetime.utcnow()
+            observation_date=datetime.datetime.utcnow(),
+            observer_id=auth.current_user.get("email"),
         )
-        # Remove all related sightings for the checklist, if any
+        
+        # Remove all related sightings for the checklist (if any)
         db(db.sightings.sampling_event_id == checklist_id).delete()
+
     else:
         # Insert a new checklist record without using uuid, instead using auto-incremented ID
         checklist_id = db.checklists.insert(
@@ -174,15 +182,62 @@ def save_checklist():
             observation_count=item["count"],
         )
 
+    # Insert a record in the user_checklists table to associate the checklist with the user
+    user_email = auth.current_user.get("email")  # Get the logged-in user's email
+    for item in species_data:
+        print("this is item ", item)
+        species_row = db(db.species.common_name == item["common_name"]).select().first()
+        if species_row:
+            species_id = species_row.id  # Use species_id (integer)
+        else:
+            raise HTTP(400, f"Species {item['common_name']} not found.")
+        
+        # Insert species_id instead of common_name in user_checklists table
+        db.user_checklists.insert(
+            user_email=user_email,
+            checklist_id=checklist_id,
+            species_id=species_id,  # Save species_id, not common_name
+            observation_count=item["count"],  # Observation count
+        )
+
     return dict(status="success", checklist_id=checklist_id)
 
-#Create an endpoint to retrieve submitted checklists.
-@action("get_checklists", method=["GET"])
-@action.uses(db, auth)
-def get_checklists():
-    checklists = db(db.checklists.observer_id == auth.current_user.get("email")).select().as_list()
-    return dict(checklists=checklists)
-
+@action("my_checklist")
+@action.uses("my_checklist.html", db, session, auth)
+def my_checklist():
+    # Make sure the user is logged in
+    if not auth.current_user:
+        raise HTTP(403, "You must be logged in to view your checklists.")
+    
+    user_email = auth.current_user.get('email')
+    
+    # Select checklists associated with the current user
+    checklists = db(db.user_checklists.user_email == user_email).select()
+    
+    checklist_items = []
+    for user_checklist in checklists:
+        # Get the checklist data from the checklists table
+        checklist = db.checklists[user_checklist.checklist_id]
+        
+        # Retrieve the species based on species_id from the species table
+        species = db(db.species.id == user_checklist.species_id).select().first()
+        
+        if species:
+            common_name = species.common_name
+        else:
+            common_name = "Unknown species"  # Fallback if species is not found
+        
+        # Add the relevant fields to display, including the user_observation_count
+        checklist_items.append({
+            'sampling_event_id': checklist.sampling_event_id,
+            'latitude': checklist.latitude,
+            'longitude': checklist.longitude,
+            'observation_date': checklist.observation_date,
+            'common_name': common_name,  # Retrieved from species table
+            'user_observation_count': user_checklist.observation_count,  # Fetch from user_checklists
+        })
+    
+    return dict(checklist_items=checklist_items)
 
 #also Iain
 @action('user_stats')
