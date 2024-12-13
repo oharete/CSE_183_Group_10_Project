@@ -7,6 +7,17 @@
     <h2 class="subtitle">Explore bird sightings and statistics</h2>
   </section>
 
+  <!-- Navigation Buttons -->
+  <section class="section">
+    <div class="buttons">
+      <!-- Link to the Checklist Page -->
+      <button class="button is-link" @click="goToChecklist">Submit Checklist</button>
+      
+      <!-- Link to the Stats Page -->
+      <button class="button is-info" @click="goToStats">My Birding Stats</button>
+    </div>
+  </section>
+
   <!-- Species Selector -->
   <section class="section">
     <div class="field">
@@ -21,7 +32,7 @@
         />
       </div>
       <!-- Suggestions Dropdown -->
-      <div v-if="speciesSuggestions.length > 0" class="dropdown is-active">
+      <div v-if="speciesSuggestions.length > 0" class="dropdown is-active suggestions-dropdown">
         <div class="dropdown-menu">
           <div class="dropdown-content">
             <a
@@ -62,5 +73,19 @@
   rel="stylesheet"
   href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
 />
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script> <!-- Add Leaflet.heat -->
+<style>
+  /* Ensure the suggestions dropdown is above the map */
+  .suggestions-dropdown {
+    position: absolute;
+    z-index: 1000; /* High z-index to ensure it overlays the map */
+    background: white; /* Add background to dropdown for visibility */
+  }
+
+  #map {
+    position: relative;
+    z-index: 1; /* Map stays below other elements */
+  }
+</style>
 <script src="/static/js/index.js"></script>
 [[end]]
