@@ -13,9 +13,26 @@
     <div class="buttons">
       <!-- Button to navigate to the Checklist Page -->
       <button class="button is-link" @click="goToChecklist">Submit Checklist</button>
-      
+
       <!-- Button to navigate to the Stats Page -->
       <button class="button is-info" @click="goToStats">My Birding Stats</button>
+    </div>
+  </section>
+
+  <!-- Random Bird Section -->
+  <section class="section">
+    <div>
+      <h2 class="title">Discover a Random Bird</h2>
+      <div v-if="randomBird">
+        <p class="subtitle">Today's bird: <strong>{{ randomBird }}</strong></p>
+      </div>
+      <div v-else-if="error">
+        <p class="has-text-danger">Error: {{ error }}</p>
+      </div>
+      <div v-else>
+        <p>Loading...</p>
+      </div>
+      <button class="button is-primary mt-2" @click="fetchRandomBird">Get Another Random Bird</button>
     </div>
   </section>
 
@@ -25,25 +42,16 @@
       <label class="label">Select Species</label>
       <div class="control">
         <!-- Input field for species search -->
-        <input
-          type="text"
-          class="input"
-          v-model="selectedSpecies"
-          placeholder="Type to search for a species"
-          @input="fetchSpecies"
-        />
+        <input type="text" class="input" v-model="selectedSpecies" placeholder="Type to search for a species"
+          @input="fetchSpecies" />
       </div>
       <!-- Dropdown for species suggestions -->
       <div v-if="speciesSuggestions.length > 0" class="dropdown is-active suggestions-dropdown">
         <div class="dropdown-menu">
           <div class="dropdown-content">
             <!-- List of suggestions rendered dynamically -->
-            <a
-              v-for="species in speciesSuggestions"
-              :key="species.id"
-              class="dropdown-item"
-              @click="selectSpecies(species.name)"
-            >
+            <a v-for="species in speciesSuggestions" :key="species.id" class="dropdown-item"
+              @click="selectSpecies(species.name)">
               {{ species.name }}
             </a>
           </div>
@@ -74,17 +82,11 @@
 [[block page_scripts]]
 <!-- Leaflet library for maps -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <!-- Leaflet Draw plugin for drawing shapes -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
-/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 
 <!-- Leaflet Heatmap plugin for heatmap visualization -->
 <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
@@ -93,12 +95,16 @@
   /* Ensure the species suggestions dropdown is visible above the map */
   .suggestions-dropdown {
     position: absolute;
-    z-index: 1000; /* High z-index to overlay the map */
-    background: white; /* Add background for better visibility */
+    z-index: 1000;
+    /* High z-index to overlay the map */
+    background: white;
+    /* Add background for better visibility */
   }
+
   #map {
     position: relative;
-    z-index: 1; /* Keep the map below other elements */
+    z-index: 1;
+    /* Keep the map below other elements */
   }
 </style>
 

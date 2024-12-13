@@ -9,6 +9,9 @@ const app = Vue.createApp({
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
       loadingHeatmap: false, // Show loading indicator while heatmap is being updated
+      randomBird: null,
+      error: null,
+
       userStatsData: { //Iain work start
         speciesList: [], // Stores all species seen by the user
         trends: [], // Stores bird-watching trends over time
@@ -94,6 +97,24 @@ const app = Vue.createApp({
         blur: 15,
         maxZoom: 17,
       }).addTo(this.map);
+    },
+
+    fetchRandomBird() {
+      fetch("/get_random_bird")
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.common_name) {
+            this.randomBird = data.common_name;
+            this.error = null;
+          } else if (data.error) {
+            this.randomBird = null;
+            this.error = data.error;
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching random bird:", err);
+          this.error = "Failed to fetch random bird.";
+        });
     },
 
     fetchDensity() {
@@ -249,6 +270,7 @@ const app = Vue.createApp({
   /////////////// For checklist end
 
   mounted() {
+    this.fetchRandomBird(); // Fetch a random bird on page load
     this.initMap();
     this.centerMapOnUser();
     this.fetchDensity(); // Load heatmap for all species by default

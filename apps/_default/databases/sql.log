@@ -1,4 +1,4 @@
-timestamp: 2024-12-13T02:47:29.784503
+timestamp: 2024-12-13T03:29:43.098978
 CREATE TABLE "py4web_session"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "rkey" CHAR(512),
@@ -8,7 +8,7 @@ CREATE TABLE "py4web_session"(
     "expires_on" TIMESTAMP
 );
 success!
-timestamp: 2024-12-13T02:47:29.792768
+timestamp: 2024-12-13T03:29:43.103458
 CREATE TABLE "auth_user"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "email" CHAR(512) UNIQUE,
@@ -21,20 +21,20 @@ CREATE TABLE "auth_user"(
     "past_passwords_hash" TEXT
 );
 success!
-timestamp: 2024-12-13T02:47:29.797904
+timestamp: 2024-12-13T03:29:43.106072
 CREATE TABLE "auth_user_tag_groups"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "tagpath" CHAR(512),
     "record_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE ON UPDATE CASCADE  
 );
 success!
-timestamp: 2024-12-13T02:47:29.804410
+timestamp: 2024-12-13T03:29:43.112079
 CREATE TABLE "species"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "common_name" CHAR(512) UNIQUE
 );
 success!
-timestamp: 2024-12-13T02:47:29.808888
+timestamp: 2024-12-13T03:29:43.115369
 CREATE TABLE "checklists"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "sampling_event_id" CHAR(512) UNIQUE,
@@ -46,7 +46,7 @@ CREATE TABLE "checklists"(
     "duration_minutes" DOUBLE
 );
 success!
-timestamp: 2024-12-13T02:47:29.813911
+timestamp: 2024-12-13T03:29:43.118516
 CREATE TABLE "user_checklists"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "user_email" CHAR(512),
@@ -55,7 +55,7 @@ CREATE TABLE "user_checklists"(
     "observation_count" INTEGER
 );
 success!
-timestamp: 2024-12-13T02:47:29.818208
+timestamp: 2024-12-13T03:29:43.121379
 CREATE TABLE "sightings"(
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "sampling_event_id" INTEGER REFERENCES "checklists" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
