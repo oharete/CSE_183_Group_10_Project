@@ -1,0 +1,35 @@
+[[extend 'layout.html']]
+
+<style>
+[v-cloak] {
+     display: none;
+}
+</style>
+
+<div class="section" id="app" v-cloak>
+  <h1 class="title"><i class="fa-solid fa-cube"></i> User Stats</h1>
+
+  <!-- Searchable Species List -->
+  <h2>Search for a Species</h2>
+  <input
+    type="text"
+    v-model="searchQuery"
+    placeholder="Enter species name"
+    class="input"
+  />
+  <button @click="fetchTrendsForSpecies" class="button is-primary">
+    Show Trends
+  </button>
+
+  <!-- Trends Visualization -->
+  <h2>Your Bird-Watching Trends</h2>
+  <canvas id="trendChart"></canvas>
+  <p v-if="trends.length === 0">No trends data available for the selected species.</p>
+</div>
+
+[[block page_scripts]]
+<script>
+  const selectedSpecies = null; // Ensures it's defined initially
+</script>
+<script src="/static/js/user_stats.js"></script>
+[[end]]

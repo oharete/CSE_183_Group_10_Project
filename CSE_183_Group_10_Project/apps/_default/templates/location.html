@@ -1,0 +1,74 @@
+[[extend 'layout.html']]
+
+<style>
+  #sightingsGraph {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 20px;
+    max-height: 400px;
+    width: 100%;
+  }
+</style>
+
+<div class="section" id="app">
+  <!-- Region Statistics -->
+  <section class="section">
+    <h1 class="title">Region Statistics</h1>
+    <h2 class="subtitle">Explore bird data for the selected region</h2>
+  </section>
+
+  <!-- Graph Section -->
+  <section v-if="graphData.length > 0" class="section">
+    <h2 class="title">Sightings Over Time</h2>
+    <canvas id="sightingsGraph"></canvas>
+  </section>
+
+  <!-- Species List -->
+  <section class="section">
+    <h2 class="title">Species Observed</h2>
+    <table class="table is-fullwidth is-striped">
+      <thead>
+        <tr>
+          <th>Species</th>
+          <th>Sightings</th>
+          <th>Checklists</th>
+          <th>View Graph</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="species in speciesStats" :key="species.name">
+          <td>{{ species.name }}</td>
+          <td>{{ species.sightings }}</td>
+          <td>{{ species.checklists }}</td>
+          <td><button class="button is-small is-info" @click="viewGraph(species.name)">View</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Top Contributors -->
+  <section class="section">
+    <h2 class="title">Top Contributors</h2>
+    <table class="table is-fullwidth is-striped">
+      <thead>
+        <tr>
+          <th>Observer</th>
+          <th>Checklists Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="contributor in topContributors" :key="contributor.observer_id">
+          <td>{{ contributor.observer_id }}</td>
+          <td>{{ contributor.checklists }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+[[block page_scripts]]
+<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/location.js"></script>
+[[end]]
+
