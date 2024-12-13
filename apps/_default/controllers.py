@@ -93,45 +93,6 @@ def density():
     return dict(density=density_data)
 
 
-# @action("region_stats", method=["POST"])
-# @action.uses(db)
-# def region_stats():
-#     try:
-#         # Extract bounds from the request
-#         north = float(request.json.get("north"))
-#         south = float(request.json.get("south"))
-#         east = float(request.json.get("east"))
-#         west = float(request.json.get("west"))
-
-#         # Validate bounds
-#         if not (north and south and east and west):
-#             raise ValueError("Invalid region bounds")
-
-#         # Query the database for sightings within the region
-#         checklists_in_region = db(
-#             (db.checklists.latitude <= north) &
-#             (db.checklists.latitude >= south) &
-#             (db.checklists.longitude <= east) &
-#             (db.checklists.longitude >= west)
-#         ).select()
-
-#         checklist_ids = [row.id for row in checklists_in_region]
-
-#         # Aggregate data for sightings
-#         sightings = db(db.sightings.sampling_event_id.belongs(checklist_ids)).select()
-#         species_count = len(set(sighting.common_name for sighting in sightings))
-#         observation_count = sum(sighting.observation_count for sighting in sightings)
-
-#         return dict(
-#             species_count=species_count,
-#             observation_count=observation_count,
-#             checklist_count=len(checklist_ids)
-#         )
-
-#     except Exception as e:
-#         return dict(error=str(e))
-
-
 
 
 @action('test')
@@ -255,3 +216,48 @@ def user_stats_trends():
         {"date": t["observation_date"], "count": t["_extra"]["SUM(sightings.observation_count)"]}
         for t in trends
     ])
+
+
+# code for location page
+@action('api/region_stats', method=["POST"])
+@action.uses(db)
+def region_stats():
+    try:
+        # Get region bounds from the request
+        data = request.json
+        north, south, east, west = data['north'], data['south'], data['east'], data['west']
+
+        # Query for sightings within the region bounds
+        sightings = db(
+            (db.checklists.latitude <= north) &
+            (db.checklists.latitude >= south) &
+            (db.checklists.longitude <= east) &
+            (db.checklists.longitude >= west)
+        ).select()
+
+        # Process the data
+        species_stats = {}
+        for sighting in sightings:
+            checklist_id = sighting.id
+            species = db(db.sightings.sampling_event_id == checklist_id).select()
+            for s in species:
+                species_name = db.species[s.common_name].common_name
+                if species_name not in species_stats:
+                    species_stats[species_name] = {'sightings': 0, 'checklists': 0}
+                species_stats[species_name]['sightings'] += s.observation_count
+                species_stats[species_name]['checklists'] += 1
+
+        # Get top contributors
+        top_contributors = db(
+            (db.checklists.latitude <= north) &
+            (db.checklists.latitude >= south) &
+            (db.checklists.longitude <= east) &
+            (db.checklists.longitude >= west)
+        ).select(db.checklists.observer_id, db.checklists.id.count(), groupby=db.checklists.observer_id, orderby=~db.checklists.id.count())
+
+        return dict(
+            species_stats=species_stats,
+            top_contributors=[{'observer_id': c.observer_id, 'checklists': c['id.count']} for c in top_contributors]
+        )
+    except Exception as e:
+        return dict(error=str(e))
