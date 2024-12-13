@@ -1,6 +1,9 @@
+[[extend 'layout.html']]
 <div id="user-stats">
     <h1>User Stats</h1>
   
+    <!-- Button to navigate back to stats-->
+    <button @click="goToUserStats()">View My Stats</button>
     <!-- Searchable Species List -->
     <h2>Species You've Seen</h2>
     <input type="text" v-model="searchQuery" placeholder="Search species">
@@ -29,3 +32,4 @@
     <h2>Your Bird-Watching Trends</h2>
     <canvas id="trendChart"></canvas>
 </div>
+[[end]]

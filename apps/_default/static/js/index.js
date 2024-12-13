@@ -7,6 +7,11 @@ const app = Vue.createApp({
       drawingLayer: null, // Layer group for user-drawn shapes
       selectedSpecies: '', // User's selected species
       speciesSuggestions: [], // Suggestions for species
+      userStatsData: { //Iain work start
+        speciesList: [], // Stores all species seen by the user
+        trends: [], // Stores bird-watching trends over time
+      },//Iain work end
+            
 
       //for checklist page
       searchQuery: "", // Search bar input
@@ -151,6 +156,29 @@ const app = Vue.createApp({
               console.error("Error updating map with species data:", error);
           });
     },
+    //Iain work start
+    fetchUserStats() {
+      // Fetch species list for the user
+      fetch("/api/user_stats/species")
+        .then((response) => response.json())
+        .then((data) => {
+          this.userStatsData.speciesList = data.species;
+        })
+        .catch((error) => {
+          console.error("Error fetching user stats (species list):", error);
+        });
+    
+      // Fetch bird-watching trends
+      fetch("/api/user_stats/trends")
+        .then((response) => response.json())
+        .then((data) => {
+          this.userStatsData.trends = data.trends;
+        })
+        .catch((error) => {
+          console.error("Error fetching user stats (trends):", error);
+        });
+    },
+    
 
     //for checklist
     fetchSpeciesChecklist() {

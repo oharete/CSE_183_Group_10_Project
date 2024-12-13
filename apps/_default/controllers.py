@@ -232,3 +232,29 @@ def delete_checklist(checklist_id):
 def user_stats():
     return dict()  
 
+@action("api/user_stats/species", method=["GET"])
+@action.uses(db, auth)
+def user_stats_species():
+    user_id = auth.current_user.get("email")
+    species = db(
+        (db.checklists.observer_id == user_id) &
+        (db.sightings.sampling_event_id == db.checklists.id) &
+        (db.sightings.common_name == db.species.id)
+    ).select(db.species.common_name, distinct=True).as_list()
+    return dict(species=[s["common_name"] for s in species])
+#iain
+@action("api/user_stats/trends", method=["GET"])
+@action.uses(db, auth)
+def user_stats_trends():
+    user_id = auth.current_user.get("email")
+    trends = db(
+        (db.checklists.observer_id == user_id)
+    ).select(
+        db.checklists.observation_date,
+        db.sightings.observation_count.sum(),
+        groupby=db.checklists.observation_date
+    ).as_list()
+    return dict(trends=[
+        {"date": t["observation_date"], "count": t["_extra"]["SUM(sightings.observation_count)"]}
+        for t in trends
+    ])
